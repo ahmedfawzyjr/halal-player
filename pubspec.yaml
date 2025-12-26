@@ -43,6 +43,9 @@ dependencies:
   # Utils
   intl: any
   uuid: any
+  
+  # AI/ML
+  onnxruntime_v2: any
 
 dev_dependencies:
   flutter_test:

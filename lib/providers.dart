@@ -10,6 +10,7 @@ import 'core/policy_engine.dart';
 import 'core/ai_gateway.dart';
 import 'ai/frame_analyzer.dart';
 import 'ai/image_analyzer.dart';
+import 'ai/real_detectors.dart';
 
 /// App configuration provider
 final appConfigProvider = NotifierProvider<AppConfigNotifier, AppConfig>(
@@ -63,11 +64,12 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
   }
 }
 
-/// AI Gateway provider
+/// AI Gateway provider - uses real ONNX-based detectors
 final aiGatewayProvider = Provider<AIGateway>((ref) {
+  // Use real detectors with ONNX models
   return AIGateway(
-    nsfwDetector: PlaceholderNSFWDetector(),
-    nudenetDetector: PlaceholderNudeNetDetector(),
+    nsfwDetector: RealNSFWDetector(),
+    nudenetDetector: RealNudeNetDetector(),
   );
 });
 

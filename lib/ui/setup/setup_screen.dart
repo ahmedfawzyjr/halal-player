@@ -32,9 +32,45 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Progress Indicator
+            // Window Controls Row
+            Container(
+              height: 40,
+              color: Theme.of(context).colorScheme.surface,
+              child: Row(
+                children: [
+                  const SizedBox(width: 16),
+                  Image.asset(
+                    'assets/img/logo-icon.png',
+                    width: 24,
+                    height: 24,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.play_circle, size: 24),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Halal Player Setup',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.minimize, size: 18),
+                    onPressed: () {
+                      // Minimize window - requires window_manager
+                    },
+                    tooltip: 'Minimize',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 18),
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    tooltip: 'Close',
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              ),
+            ),
+            
+            // Progress Indicator (5 steps now)
             LinearProgressIndicator(
-              value: (_currentPage + 1) / 4,
+              value: (_currentPage + 1) / 5,
               backgroundColor: Colors.grey[200],
               valueColor: AlwaysStoppedAnimation<Color>(
                 Theme.of(context).primaryColor,
@@ -50,6 +86,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
                   _buildLanguagePage(context, ref),
                   _buildPrivacyPage(context, l10n),
                   _buildFilterModePage(context, ref, l10n),
+                  _buildSubtitlePage(context, l10n),
                   _buildFinishPage(context, l10n),
                 ],
               ),
@@ -76,7 +113,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
                     
                   ElevatedButton(
                     onPressed: () {
-                      if (_currentPage < 3) {
+                      if (_currentPage < 4) {
                         _pageController.nextPage(
                           duration: const Duration(milliseconds: 300),
                           curve: Curves.easeInOut,
@@ -92,7 +129,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
                       ),
                     ),
                     child: Text(
-                      _currentPage == 3 ? 'Start Using App' : 'Continue',
+                      _currentPage == 4 ? 'Start Using App' : 'Continue',
                     ),
                   ),
                 ],
@@ -362,6 +399,58 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSubtitlePage(BuildContext context, AppLocalizations l10n) {
+    return Padding(
+      padding: const EdgeInsets.all(32.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.subtitles, size: 64, color: Colors.blue),
+          const SizedBox(height: 24),
+          Text(
+            'Subtitle Settings',
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Configure subtitle preferences',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          const SizedBox(height: 32),
+          Card(
+            child: SwitchListTile(
+              title: const Text('Auto-download subtitles'),
+              subtitle: const Text('Download subtitles from OpenSubtitles'),
+              value: true,
+              onChanged: (value) {},
+              secondary: const Icon(Icons.download),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.language),
+              title: const Text('Preferred Subtitle Language'),
+              subtitle: const Text('Arabic'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {},
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: SwitchListTile(
+              title: const Text('Islamic Safe Mode'),
+              subtitle: const Text('Filter inappropriate words in subtitles'),
+              value: true,
+              onChanged: (value) {},
+              secondary: const Icon(Icons.mosque),
+            ),
+          ),
+        ],
       ),
     );
   }
