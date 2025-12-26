@@ -1,0 +1,401 @@
+// Halal Player - Setup Wizard
+//
+// First-run experience for language, privacy, and filter mode selection
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
+import '../../core/language_provider.dart';
+import '../../core/config.dart';
+import '../../core/theme.dart';
+import '../../l10n/app_localizations.dart';
+import '../../main.dart';
+
+class SetupWizardScreen extends ConsumerStatefulWidget {
+  const SetupWizardScreen({super.key});
+
+  @override
+  ConsumerState<SetupWizardScreen> createState() => _SetupWizardScreenState();
+}
+
+class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Progress Indicator
+            LinearProgressIndicator(
+              value: (_currentPage + 1) / 4,
+              backgroundColor: Colors.grey[200],
+              valueColor: AlwaysStoppedAnimation<Color>(
+                Theme.of(context).primaryColor,
+              ),
+            ),
+            
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                physics: const NeverScrollableScrollPhysics(),
+                onPageChanged: (page) => setState(() => _currentPage = page),
+                children: [
+                  _buildLanguagePage(context, ref),
+                  _buildPrivacyPage(context, l10n),
+                  _buildFilterModePage(context, ref, l10n),
+                  _buildFinishPage(context, l10n),
+                ],
+              ),
+            ),
+            
+            // Navigation Buttons
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  if (_currentPage > 0)
+                    TextButton(
+                      onPressed: () {
+                        _pageController.previousPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      },
+                      child: Text(l10n.goBack),
+                    )
+                  else
+                    const SizedBox.shrink(),
+                    
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_currentPage < 3) {
+                        _pageController.nextPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      } else {
+                        _completeSetup();
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
+                    ),
+                    child: Text(
+                      _currentPage == 3 ? 'Start Using App' : 'Continue',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguagePage(BuildContext context, WidgetRef ref) {
+    final currentLocale = ref.watch(languageProvider);
+    
+    return Padding(
+      padding: const EdgeInsets.all(32.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.language, size: 64, color: Colors.blue),
+          const SizedBox(height: 24),
+          Text(
+            'Select Language / اختر اللغة',
+            style: Theme.of(context).textTheme.headlineMedium,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          Expanded(
+            child: GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                childAspectRatio: 2.5,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: supportedLanguages.length,
+              itemBuilder: (context, index) {
+                final lang = supportedLanguages[index];
+                final isSelected = currentLocale.languageCode == lang.code;
+                
+                return InkWell(
+                  onTap: () {
+                    ref.read(languageProvider.notifier).setLanguage(lang.code);
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isSelected 
+                          ? Theme.of(context).primaryColor.withOpacity(0.1)
+                          : null,
+                      border: Border.all(
+                        color: isSelected 
+                            ? Theme.of(context).primaryColor 
+                            : Colors.grey.shade300,
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      lang.nativeName,
+                      style: TextStyle(
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected 
+                            ? Theme.of(context).primaryColor 
+                            : null,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrivacyPage(BuildContext context, AppLocalizations l10n) {
+    return Padding(
+      padding: const EdgeInsets.all(32.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.security, size: 80, color: Colors.green),
+          const SizedBox(height: 32),
+          Text(
+            l10n.privacy,
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          const SizedBox(height: 24),
+          _buildFeatureItem(
+            context,
+            Icons.wifi_off,
+            '100% Offline',
+            'All AI processing happens locally on your device.',
+          ),
+          const SizedBox(height: 16),
+          _buildFeatureItem(
+            context,
+            Icons.cloud_off,
+            'No Cloud Uploads',
+            'Your photos and videos never leave your computer.',
+          ),
+          const SizedBox(height: 16),
+          _buildFeatureItem(
+            context,
+            Icons.visibility_off,
+            'No Tracking',
+            'We do not track your usage or collect personal data.',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureItem(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String description,
+  ) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceVariant,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, size: 24),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                description,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterModePage(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.all(32.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.filter_shield, size: 64, color: Colors.orange),
+          const SizedBox(height: 24),
+          Text(
+            l10n.filteringMode,
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Choose your initial protection level',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          const SizedBox(height: 32),
+          Expanded(
+            child: ListView(
+              children: [
+                _buildModeTile(
+                  context,
+                  ref,
+                  FilterMode.strict,
+                  'Strict Islamic',
+                  'Blocks all inappropriate content immediately.',
+                  Icons.mosque,
+                ),
+                _buildModeTile(
+                  context,
+                  ref,
+                  FilterMode.family,
+                  'Family Safe',
+                  'Blurs inappropriate content. Good for families.',
+                  Icons.family_restroom,
+                ),
+                _buildModeTile(
+                  context,
+                  ref,
+                  FilterMode.teen,
+                  'Teen / Moderate',
+                  'Allows mild content but blocks explicit scenes.',
+                  Icons.school,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModeTile(
+    BuildContext context,
+    WidgetRef ref,
+    FilterMode mode,
+    String title,
+    String subtitle,
+    IconData icon,
+  ) {
+    final currentMode = ref.watch(appConfigProvider).filterMode;
+    final isSelected = currentMode == mode;
+    
+    return Card(
+      elevation: isSelected ? 4 : 1,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+          width: 2,
+        ),
+      ),
+      child: InkWell(
+        onTap: () {
+          ref.read(appConfigProvider.notifier).setFilterMode(mode);
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 32,
+                color: isSelected ? Theme.of(context).primaryColor : Colors.grey,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(subtitle),
+                  ],
+                ),
+              ),
+              if (isSelected)
+                Icon(
+                  Icons.check_circle,
+                  color: Theme.of(context).primaryColor,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFinishPage(BuildContext context, AppLocalizations l10n) {
+    return Padding(
+      padding: const EdgeInsets.all(32.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.check_circle_outline, size: 100, color: Colors.green),
+          const SizedBox(height: 32),
+          Text(
+            'You are all set!',
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Halal Player is ready to protect your media experience.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _completeSetup() async {
+    final box = await Hive.openBox('halal_player');
+    await box.put('is_first_run', false);
+    
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const MainNavigationView()),
+      );
+    }
+  }
+}

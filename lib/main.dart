@@ -12,6 +12,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import 'l10n/app_localizations.dart';
 
+import 'ui/setup/setup_screen.dart';
 import 'ui/home/home_screen.dart';
 import 'ui/settings/settings_screen.dart';
 import 'ui/logs/logs_screen.dart';
@@ -79,8 +80,47 @@ class HalalPlayerApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       
-      home: const MainNavigationView(),
+      home: const AppEntryPoint(),
     );
+  }
+}
+
+class AppEntryPoint extends StatefulWidget {
+  const AppEntryPoint({super.key});
+
+  @override
+  State<AppEntryPoint> createState() => _AppEntryPointState();
+}
+
+class _AppEntryPointState extends State<AppEntryPoint> {
+  bool? _isFirstRun;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkFirstRun();
+  }
+
+  Future<void> _checkFirstRun() async {
+    final box = await Hive.openBox('halal_player');
+    setState(() {
+      _isFirstRun = box.get('is_first_run', defaultValue: true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isFirstRun == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_isFirstRun!) {
+      return const SetupWizardScreen();
+    }
+
+    return const MainNavigationView();
   }
 }
 
