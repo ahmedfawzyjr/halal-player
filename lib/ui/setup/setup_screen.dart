@@ -11,6 +11,7 @@ import '../../core/config.dart';
 import '../../core/theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../main.dart';
+import '../../providers.dart';
 
 class SetupWizardScreen extends ConsumerStatefulWidget {
   const SetupWizardScreen({super.key});
@@ -256,7 +257,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.filter_shield, size: 64, color: Colors.orange),
+          const Icon(Icons.shield, size: 64, color: Colors.orange),
           const SizedBox(height: 24),
           Text(
             l10n.filteringMode,
@@ -274,7 +275,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
                 _buildModeTile(
                   context,
                   ref,
-                  FilterMode.strict,
+                  FilterMode.strictIslamic,
                   'Strict Islamic',
                   'Blocks all inappropriate content immediately.',
                   Icons.mosque,
@@ -311,7 +312,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
     String subtitle,
     IconData icon,
   ) {
-    final currentMode = ref.watch(appConfigProvider).filterMode;
+    final currentMode = ref.watch(appConfigProvider).mode;
     final isSelected = currentMode == mode;
     
     return Card(
@@ -326,7 +327,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
       ),
       child: InkWell(
         onTap: () {
-          ref.read(appConfigProvider.notifier).setFilterMode(mode);
+          ref.read(appConfigProvider.notifier).setMode(mode);
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
