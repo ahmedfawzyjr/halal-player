@@ -1,0 +1,144 @@
+{
+  "@@locale": "en",
+  "appTitle": "Halal Player",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+  "home": "Home",
+  "video": "Video",
+  "audio": "Audio",
+  "images": "Images",
+  "logs": "Logs",
+  "settings": "Settings",
+  
+  "welcomeTitle": "Welcome to Halal Player",
+  "welcomeSubtitle": "Privacy-first media player with AI content protection",
+  "protected": "Protected",
+  
+  "quickActions": "Quick Actions",
+  "openVideo": "Open Video",
+  "openAudio": "Open Audio",
+  "viewImage": "View Image",
+  "openFolder": "Open Folder",
+  "playWithProtection": "Play with AI protection",
+  "listenSafely": "Listen safely",
+  "aiScanned": "AI-scanned before display",
+  "browseLibrary": "Browse media library",
+  
+  "recentFiles": "Recent Files",
+  "noRecentFiles": "No recent files",
+  "openFileToStart": "Open a file to get started",
+  "viewAll": "View All",
+  
+  "contentLogs": "Content Logs",
+  "filter": "Filter",
+  "clearAll": "Clear All",
+  "totalAnalyzed": "Total Analyzed",
+  "allowed": "Allowed",
+  "blurred": "Blurred",
+  "blocked": "Blocked",
+  "noLogsYet": "No logs yet",
+  "logsAppearHere": "Content analysis logs will appear here",
+  "logsStoredLocally": "Logs are stored locally and never leave your device",
+  "clearAllLogs": "Clear All Logs?",
+  "clearLogsWarning": "This will permanently delete all content logs. This action cannot be undone.",
+  "cancel": "Cancel",
+  "logsCleared": "All logs have been cleared",
+  
+  "appearance": "Appearance",
+  "theme": "Theme",
+  "lightMode": "Light mode",
+  "darkMode": "Dark mode",
+  "light": "Light",
+  "dark": "Dark",
+  "auto": "Auto",
+  
+  "filteringMode": "Filtering Mode",
+  "selectFilteringLevel": "Select your preferred filtering level",
+  "strictIslamic": "Strict Islamic",
+  "strictIslamicDesc": "Maximum protection for Islamic households",
+  "family": "Family",
+  "familyDesc": "Balanced protection for families",
+  "teen": "Teen",
+  "teenDesc": "Age-appropriate filtering for teenagers",
+  "educational": "Educational",
+  "educationalDesc": "Relaxed filtering for educational content",
+  "developer": "Developer",
+  "developerDesc": "Minimal filtering for developers testing content",
+  "threshold": "Threshold",
+  
+  "aiBehavior": "AI Behavior",
+  "blurEffect": "Blur Effect",
+  "blurEffectDesc": "Use blur instead of blocking content",
+  "autoSkipFlagged": "Auto Skip Flagged",
+  "autoSkipFlaggedDesc": "Automatically skip detected content",
+  
+  "privacy": "Privacy",
+  "enableLogging": "Enable Logging",
+  "enableLoggingDesc": "Keep record of blocked content (local only)",
+  "aiExplanations": "AI Explanations",
+  "aiExplanationsDesc": "Show why content was blocked",
+  "privacyNote": "All processing happens locally. Your media never leaves your device.",
+  
+  "about": "About",
+  "version": "Version",
+  
+  "language": "Language",
+  "selectLanguage": "Select Language",
+  
+  "subtitles": "Subtitles",
+  "subtitleSettings": "Subtitle Settings",
+  "fontSize": "Font Size",
+  "fontColor": "Font Color",
+  "backgroundColor": "Background Color",
+  "position": "Position",
+  "top": "Top",
+  "bottom": "Bottom",
+  "autoDownload": "Auto Download",
+  "autoDownloadDesc": "Automatically download subtitles when available",
+  
+  "translation": "Translation",
+  "translateTo": "Translate to",
+  "autoDetect": "Auto Detect",
+  "generating": "Generating...",
+  "translating": "Translating...",
+  "noSubtitlesFound": "No subtitles found",
+  "generateSubtitles": "Generate Subtitles",
+  "downloadSubtitles": "Download Subtitles",
+  
+  "islamicSafeMode": "Islamic Safe Mode",
+  "islamicSafeModeDesc": "Filter inappropriate words in translations",
+  
+  "videoPlayer": "Video Player",
+  "audioPlayer": "Audio Player",
+  "imageViewer": "Image Viewer",
+  "comingSoon": "Coming Soon",
+  "noFileOpened": "No {type} file opened",
+  "@noFileOpened": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "openType": "Open {type}",
+  "@openType": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  
+  "safe": "Safe",
+  "flagged": "Flagged",
+  "analyzing": "Analyzing...",
+  "contentFlagged": "Content Flagged",
+  "aiFlaggedContent": "AI detected potentially inappropriate content",
+  "goBack": "Go Back",
+  "viewAnyway": "View Anyway",
+  "contentBlocked": "Content Blocked",
+  "blockedByFilters": "This content has been blocked by AI safety filters",
+  "confidence": "Confidence",
+  "privacyProtected": "Your privacy is protected - this was analyzed locally"
+}

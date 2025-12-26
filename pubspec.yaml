@@ -1,0 +1,59 @@
+name: halal_player
+description: "Privacy-first media player with AI content filtering for Islamic compliance"
+version: 1.0.0+1
+publish_to: 'none'
+
+environment:
+  sdk: ^3.7.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  
+  # UI Components
+  window_manager: any
+  
+  # Media Players
+  media_kit: any
+  media_kit_video: any
+  media_kit_libs_windows_video: any
+  just_audio: any
+  just_audio_windows: any
+  
+  # State Management
+  flutter_riverpod: any
+  
+  # Storage & Paths
+  hive: any
+  hive_flutter: any
+  path_provider: any
+  path: any
+  
+  # Image Processing
+  image: any
+  
+  # File Operations
+  file_picker: any
+  
+  # Networking
+  dio: any
+  
+  # Utils
+  intl: any
+  uuid: any
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: any
+
+flutter:
+  generate: true
+  uses-material-design: true
+  
+  assets:
+    - assets/models/
+    - assets/icons/
+
