@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.halal" "\0"
-            VALUE "FileDescription", "halal_player" "\0"
+            VALUE "CompanyName", "Ahmed Fawzy" "\0"
+            VALUE "FileDescription", "Halal Player - Privacy-first media player with AI content filtering" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "halal_player" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2025 com.halal. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2025 Ahmed Fawzy. All rights reserved." "\0"
             VALUE "OriginalFilename", "halal_player.exe" "\0"
-            VALUE "ProductName", "halal_player" "\0"
+            VALUE "ProductName", "Halal Player" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
