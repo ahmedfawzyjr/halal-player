@@ -1,15 +1,19 @@
 # 🎬 Halal Player
 
 <p align="center">
+  <img src="assets/img/logo.png" alt="Halal Player Logo" width="200">
+</p>
+
+<p align="center">
+  <strong>Privacy-first media player with AI content filtering for Islamic compliance</strong>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Flutter-3.38-blue?logo=flutter" alt="Flutter">
   <img src="https://img.shields.io/badge/Platform-Windows-0078D6?logo=windows" alt="Windows">
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License">
   <img src="https://img.shields.io/badge/AI-Powered-orange" alt="AI">
 </p>
-
-> **Privacy-first media player with AI content filtering for Islamic compliance**
-
-Halal Player is a Flutter Desktop application that protects you and your family from inappropriate content using on-device AI filtering. All processing happens locally - your media never leaves your device.
 
 ---
 
@@ -40,9 +44,15 @@ Halal Player is a Flutter Desktop application that protects you and your family 
 
 ---
 
-## 📸 Screenshots
+## 🎨 Brand Colors
 
-*Coming soon*
+| Color | Hex | Usage |
+|-------|-----|-------|
+| 🟢 Primary Green | `#4CAF50` | Buttons, accents, safe indicators |
+| ⬛ Dark Background | `#1A1A1A` | Main background (dark mode) |
+| 🔲 Dark Surface | `#2A2A2A` | Cards, panels |
+| ⬜ Light Background | `#F5F5F5` | Main background (light mode) |
+| ⚪ Light Surface | `#FFFFFF` | Cards, panels (light mode) |
 
 ---
 
@@ -81,29 +91,16 @@ flutter build windows --release
 lib/
 ├── main.dart              # App entry point
 ├── providers.dart         # Riverpod state management
-├── core/
-│   ├── config.dart        # Filter modes & settings
-│   ├── policy_engine.dart # AI decision engine
-│   ├── ai_gateway.dart    # AI model interface
-│   ├── theme.dart         # Light/Dark themes
-│   ├── language_provider.dart
-│   ├── recent_files.dart
-│   └── keyboard_shortcuts.dart
-├── modules/
-│   ├── video_player/      # Video with AI overlay
-│   ├── audio_player/      # Audio with waveform
-│   ├── image_viewer/      # Image with AI scan
-│   ├── subtitles/         # SRT/VTT parser & OpenSubtitles
-│   └── translation/       # Whisper & Argos
-├── ai/
-│   ├── frame_analyzer.dart
-│   ├── image_analyzer.dart
-│   └── ui/blur_block_widgets.dart
-├── ui/
-│   ├── home/
-│   ├── settings/
-│   └── logs/
+├── core/                  # Config, themes, engine
+├── modules/               # Video, audio, subtitles, translation
+├── ai/                    # Frame & image analyzers
+├── ui/                    # Home, settings, logs screens
 └── l10n/                  # 15 language files
+
+assets/
+├── img/                   # Logo and branding
+├── models/                # AI models (ONNX)
+└── icons/                 # App icons
 ```
 
 ---
@@ -116,13 +113,11 @@ Download and place in `assets/models/`:
 - `nudenet.onnx` - NudeNet model
 
 ### Whisper STT (Optional)
-Install for auto-generated subtitles:
 ```bash
 pip install openai-whisper
 ```
 
 ### Argos Translate (Optional)
-Install for offline translation:
 ```bash
 pip install argostranslate
 ```
@@ -140,8 +135,6 @@ pip install argostranslate
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read our contributing guidelines first.
-
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
@@ -152,20 +145,21 @@ Contributions are welcome! Please read our contributing guidelines first.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
 ## 🙏 Acknowledgments
 
-- [Flutter](https://flutter.dev) - UI framework
-- [media_kit](https://github.com/media-kit/media-kit) - Video player
-- [OpenSubtitles](https://opensubtitles.com) - Subtitle database
-- [OpenAI Whisper](https://github.com/openai/whisper) - Speech-to-text
-- [Argos Translate](https://github.com/argosopentech/argos-translate) - Offline translation
+- [Flutter](https://flutter.dev)
+- [media_kit](https://github.com/media-kit/media-kit)
+- [OpenSubtitles](https://opensubtitles.com)
+- [OpenAI Whisper](https://github.com/openai/whisper)
 
 ---
 
 <p align="center">
+  <img src="assets/img/logo-icon.png" alt="Halal Player Icon" width="64">
+  <br>
   Made with ❤️ for the Muslim community
 </p>
