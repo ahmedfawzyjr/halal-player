@@ -35,7 +35,7 @@ dependencies:
   image: any
   
   # File Operations
-  file_picker: any
+  file_picker: ^8.0.0
   
   # Networking
   dio: any
