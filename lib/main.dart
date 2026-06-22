@@ -2,6 +2,8 @@
 // 
 // Privacy-first media player with AI content filtering
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -33,23 +35,25 @@ void main() async {
   // Initialize MediaKit
   MediaKit.ensureInitialized();
 
-  // Initialize window manager
-  await windowManager.ensureInitialized();
+  if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+    // Initialize window manager
+    await windowManager.ensureInitialized();
 
-  const windowOptions = WindowOptions(
-    size: Size(1280, 720),
-    minimumSize: Size(800, 600),
-    center: true,
-    backgroundColor: Colors.transparent,
-    skipTaskbar: false,
-    titleBarStyle: TitleBarStyle.hidden,
-    title: 'Halal Player',
-  );
+    const windowOptions = WindowOptions(
+      size: Size(1280, 720),
+      minimumSize: Size(800, 600),
+      center: true,
+      backgroundColor: Colors.transparent,
+      skipTaskbar: false,
+      titleBarStyle: TitleBarStyle.hidden,
+      title: 'Halal Player',
+    );
 
-  await windowManager.waitUntilReadyToShow(windowOptions, () async {
-    await windowManager.show();
-    await windowManager.focus();
-  });
+    await windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+  }
 
   runApp(const ProviderScope(child: HalalPlayerApp()));
 }
@@ -144,12 +148,16 @@ class _MainNavigationViewState extends State<MainNavigationView>
   @override
   void initState() {
     super.initState();
-    windowManager.addListener(this);
+    if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+      windowManager.addListener(this);
+    }
   }
 
   @override
   void dispose() {
-    windowManager.removeListener(this);
+    if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+      windowManager.removeListener(this);
+    }
     super.dispose();
   }
 
@@ -244,42 +252,56 @@ class _MainNavigationViewState extends State<MainNavigationView>
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = Platform.isWindows || Platform.isMacOS || Platform.isLinux;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF2A2A2A),
-        title: GestureDetector(
-          onPanStart: (_) => windowManager.startDragging(),
-          child: Row(
-            children: [
-              Icon(Icons.play_circle_filled, color: Colors.green[400]),
-              const SizedBox(width: 8),
-              const Text(
-                'Halal Player',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        title: isDesktop
+            ? GestureDetector(
+                onPanStart: (_) => windowManager.startDragging(),
+                child: Row(
+                  children: [
+                    Icon(Icons.play_circle_filled, color: Colors.green[400]),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Halal Player',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
+                  ],
+                ),
+              )
+            : Row(
+                children: [
+                  Icon(Icons.play_circle_filled, color: Colors.green[400]),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Halal Player',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.minimize),
-            onPressed: () => windowManager.minimize(),
-          ),
-          IconButton(
-            icon: const Icon(Icons.crop_square),
-            onPressed: () async {
-              if (await windowManager.isMaximized()) {
-                windowManager.unmaximize();
-              } else {
-                windowManager.maximize();
-              }
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => windowManager.close(),
-          ),
-        ],
+        actions: isDesktop
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.minimize),
+                  onPressed: () => windowManager.minimize(),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.crop_square),
+                  onPressed: () async {
+                    if (await windowManager.isMaximized()) {
+                      windowManager.unmaximize();
+                    } else {
+                      windowManager.maximize();
+                    }
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => windowManager.close(),
+                ),
+              ]
+            : null,
       ),
       body: Row(
         children: [
