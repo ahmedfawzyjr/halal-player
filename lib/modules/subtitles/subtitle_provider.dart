@@ -223,9 +223,24 @@ Future<String?> _findLocalSubtitle(String videoPath) async {
 
 /// Islamic profanity filter for subtitles
 class IslamicSubtitleFilter {
+  // Common English profanity words — extend this list as needed.
+  // All matching is case-insensitive.
   static const List<String> _blockedWords = [
-    // Add profanity and inappropriate words here
-    // This is a placeholder - should be configured
+    r'\bf[*u]ck\b',
+    r'\bs[*h]it\b',
+    r'\bb[*i]tch\b',
+    r'\ba[*s]s\b',
+    r'\bd[*a]mn\b',
+    r'\bcr[*a]p\b',
+    r'\bh[*e]ll\b',
+    r'\bjerk\b',
+    r'\bmoron\b',
+    r'\bslut\b',
+    r'\bwhore\b',
+    r'\bsex\b',
+    r'\bporn\b',
+    r'\bnude\b',
+    r'\bnaked\b',
   ];
 
   static String filter(String text) {

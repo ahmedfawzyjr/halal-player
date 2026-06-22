@@ -11,6 +11,7 @@ import '../../core/config.dart';
 import '../../core/theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../main.dart';
+import '../../modules/subtitles/subtitle_provider.dart';
 import '../../providers.dart';
 
 class SetupWizardScreen extends ConsumerStatefulWidget {
@@ -404,6 +405,20 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
   }
 
   Widget _buildSubtitlePage(BuildContext context, AppLocalizations l10n) {
+    final subtitleSettings = ref.watch(subtitleSettingsProvider);
+    final notifier = ref.read(subtitleSettingsProvider.notifier);
+
+    // Language options for subtitles
+    const langOptions = [
+      ('ar', 'العربية'),
+      ('en', 'English'),
+      ('fr', 'Français'),
+      ('de', 'Deutsch'),
+      ('es', 'Español'),
+      ('tr', 'Türkçe'),
+      ('ur', 'اردو'),
+    ];
+
     return Padding(
       padding: const EdgeInsets.all(32.0),
       child: Column(
@@ -421,32 +436,62 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: 32),
+          // Auto-download toggle
           Card(
             child: SwitchListTile(
               title: const Text('Auto-download subtitles'),
               subtitle: const Text('Download subtitles from OpenSubtitles'),
-              value: true,
-              onChanged: (value) {},
+              value: subtitleSettings.autoDownload,
+              onChanged: notifier.setAutoDownload,
               secondary: const Icon(Icons.download),
             ),
           ),
           const SizedBox(height: 12),
+          // Language selector
           Card(
-            child: ListTile(
-              leading: const Icon(Icons.language),
-              title: const Text('Preferred Subtitle Language'),
-              subtitle: const Text('Arabic'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {},
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.language),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Preferred Subtitle Language'),
+                        const SizedBox(height: 4),
+                        DropdownButton<String>(
+                          value: subtitleSettings.preferredLanguage,
+                          isExpanded: true,
+                          underline: const SizedBox(),
+                          items: langOptions
+                              .map((l) => DropdownMenuItem(
+                                    value: l.$1,
+                                    child: Text(l.$2),
+                                  ))
+                              .toList(),
+                          onChanged: (code) {
+                            if (code != null) {
+                              notifier.setPreferredLanguage(code);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 12),
+          // Islamic filter toggle
           Card(
             child: SwitchListTile(
               title: const Text('Islamic Safe Mode'),
               subtitle: const Text('Filter inappropriate words in subtitles'),
-              value: true,
-              onChanged: (value) {},
+              value: subtitleSettings.islamicFilter,
+              onChanged: notifier.setIslamicFilter,
               secondary: const Icon(Icons.mosque),
             ),
           ),

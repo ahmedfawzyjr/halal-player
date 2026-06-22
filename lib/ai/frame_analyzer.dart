@@ -1,6 +1,8 @@
 // Halal Player - Frame Analyzer
 //
-// Extract and analyze video frames for AI content detection
+// Extract and analyze video frames for AI content detection.
+// The VideoPlayerScreen registers a frame-callback; the periodic
+// timer calls it to obtain raw JPEG bytes and run AI analysis.
 
 import 'dart:async';
 import 'dart:isolate';
@@ -42,18 +44,29 @@ class FrameAnalyzer {
   bool _isAnalyzing = false;
   bool _isPaused = false;
   Timer? _analysisTimer;
-  
+
+  // Frame-callback registered by the player screen.
+  // Returns raw JPEG bytes for the current video frame,
+  // or null if no frame is available right now.
+  Future<Uint8List?> Function()? _frameCallback;
+
   // Cache for analyzed frames
   final Map<int, FrameAnalysisResult> _frameCache = {};
-  
+
   // Stream controller for analysis results
   final _resultController = StreamController<FrameAnalysisResult>.broadcast();
-  
+
   /// Stream of analysis results
   Stream<FrameAnalysisResult> get resultStream => _resultController.stream;
-  
+
   /// Whether analyzer is currently running
   bool get isAnalyzing => _isAnalyzing && !_isPaused;
+
+  /// Register a callback that the analyzer calls every interval to obtain
+  /// the current video frame bytes. Set to null to stop frame extraction.
+  void setFrameCallback(Future<Uint8List?> Function()? callback) {
+    _frameCallback = callback;
+  }
 
   /// Start analyzing frames
   void start() {
@@ -138,14 +151,48 @@ class FrameAnalyzer {
     return result;
   }
 
-  /// Internal method to analyze current frame
-  /// Called by timer periodically
+  /// Called by the periodic timer — grabs the current frame via the
+  /// registered callback and runs it through the full AI pipeline.
   Future<void> _analyzeCurrentFrame() async {
-    if (_isPaused || !_isAnalyzing) return;
-    
-    // TODO: Get current frame from video player
-    // This requires integration with media_kit's frame extraction
-    // For now, this is a placeholder
+    if (_isPaused || !_isAnalyzing || _frameCallback == null) return;
+
+    try {
+      // 1. Get raw JPEG bytes from the player
+      final frameBytes = await _frameCallback!();
+      if (frameBytes == null || frameBytes.isEmpty) return;
+
+      // 2. Build a timestamp key (seconds resolution for the cache)
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final timestamp = Duration(milliseconds: nowMs);
+      final cacheKey = nowMs ~/ analysisIntervalMs; // bucket by interval
+
+      // Skip if we already have a result for this bucket
+      if (_frameCache.containsKey(cacheKey)) return;
+
+      // 3. Run AI analysis
+      final aiResult = await aiGateway.analyzeImage(frameBytes);
+
+      // 4. Apply policy
+      final policyResult = policyEngine.evaluate(
+        nsfwScore: aiResult.nsfwScore,
+        nudenetScore: aiResult.nudenetScore,
+        detectedCategories: aiResult.allCategories,
+      );
+
+      final result = FrameAnalysisResult(
+        timestamp: timestamp,
+        policyResult: policyResult,
+        processingTimeMs: aiResult.totalProcessingTimeMs,
+      );
+
+      // 5. Cache & emit
+      _frameCache[cacheKey] = result;
+      if (!_resultController.isClosed) {
+        _resultController.add(result);
+      }
+    } catch (_) {
+      // Silently ignore errors to keep playback uninterrupted
+    }
   }
 
   /// Dispose resources

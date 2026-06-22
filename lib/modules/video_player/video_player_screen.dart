@@ -1,25 +1,47 @@
 // Halal Player - Video Player Screen
 //
-// Video playback with AI content filtering
+// Video playback with:
+//  • Real AI content filtering (frame-by-frame via FFmpeg + Python AI)
+//  • Real BackdropFilter blur for flagged content
+//  • Subtitle overlay (auto-loaded from local file or OpenSubtitles)
+//  • Full keyboard shortcuts (Space, F, J/L, M, arrows)
+//  • Auto-hide controls after 3 seconds of inactivity
+//  • Content log entries written to contentLogsProvider
 
+import 'dart:async';
+import 'dart:ui';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_video/media_kit_video.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:media_kit/media_kit.dart' hide SubtitleTrack;
+import 'package:media_kit_video/media_kit_video.dart' hide SubtitleView;
 
-class VideoPlayerScreen extends StatefulWidget {
+import '../../ai/ui/blur_block_widgets.dart';
+import '../../core/keyboard_shortcuts.dart';
+import '../../modules/subtitles/subtitle_model.dart';
+import '../../modules/subtitles/subtitle_overlay.dart';
+import '../../modules/subtitles/subtitle_parser.dart';
+import '../../modules/subtitles/subtitle_provider.dart';
+import '../../providers.dart';
+import 'frame_extractor.dart';
+
+class VideoPlayerScreen extends ConsumerStatefulWidget {
   const VideoPlayerScreen({super.key, this.initialPath});
 
   final String? initialPath;
 
   @override
-  State<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
+  ConsumerState<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
 }
 
-class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
+class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
+  // ── Media Kit ────────────────────────────────────────────────────────────────
   late final Player _player;
   late final VideoController _controller;
-  
+
+  // ── Playback state ───────────────────────────────────────────────────────────
   bool _isInitialized = false;
   bool _isPlaying = false;
   bool _isBuffering = false;
@@ -28,11 +50,21 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
   double _volume = 1.0;
-  
-  // AI Filtering state
-  bool _isAnalyzing = false;
+  String? _currentPath;
+
+  // ── AI Filtering ─────────────────────────────────────────────────────────────
+  bool _isAnalyzingAI = false;
   bool _isBlurred = false;
+  bool _userOverrode = false; // user pressed "View Anyway"
   String? _warningMessage;
+  StreamSubscription? _aiSubscription;
+
+  // ── Controls auto-hide ───────────────────────────────────────────────────────
+  Timer? _hideControlsTimer;
+
+  // ── Subtitles ────────────────────────────────────────────────────────────────
+  SubtitleTrack? _currentSubtitle;
+  bool _subtitlesEnabled = true;
 
   @override
   void initState() {
@@ -40,89 +72,326 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     _initializePlayer();
   }
 
+  // ── Player init ──────────────────────────────────────────────────────────────
+
   Future<void> _initializePlayer() async {
     _player = Player();
     _controller = VideoController(_player);
-    
-    // Listen to player streams
-    _player.stream.playing.listen((playing) {
-      if (mounted) setState(() => _isPlaying = playing);
+
+    _player.stream.playing.listen((v) {
+      if (mounted) setState(() => _isPlaying = v);
+      if (v) {
+        ref.read(frameAnalyzerProvider).resume();
+        _startHideTimer();
+      } else {
+        ref.read(frameAnalyzerProvider).pause();
+      }
     });
-    
-    _player.stream.position.listen((position) {
-      if (mounted) setState(() => _position = position);
-    });
-    
-    _player.stream.duration.listen((duration) {
-      if (mounted) setState(() => _duration = duration);
-    });
-    
-    _player.stream.buffering.listen((buffering) {
-      if (mounted) setState(() => _isBuffering = buffering);
-    });
-    
-    _player.stream.volume.listen((volume) {
-      if (mounted) setState(() => _volume = volume / 100);
-    });
-    
+    _player.stream.position
+        .listen((v) { if (mounted) setState(() => _position = v); });
+    _player.stream.duration
+        .listen((v) { if (mounted) setState(() => _duration = v); });
+    _player.stream.buffering
+        .listen((v) { if (mounted) setState(() => _isBuffering = v); });
+    _player.stream.volume
+        .listen((v) { if (mounted) setState(() => _volume = v / 100); });
+
     setState(() => _isInitialized = true);
-    
-    // Open initial file if provided
+
     if (widget.initialPath != null) {
       await _openFile(widget.initialPath!);
     }
   }
 
+  // ── Open file ────────────────────────────────────────────────────────────────
+
   Future<void> _openFile(String path) async {
+    setState(() {
+      _currentPath = path;
+      _isBlurred = false;
+      _userOverrode = false;
+      _warningMessage = null;
+      _currentSubtitle = null;
+      _isAnalyzingAI = true;
+    });
+
     await _player.open(Media(path));
-    // TODO: Start frame analysis for AI filtering
+    _setupFrameAnalyzer(path);
+
+    // Load subtitles in the background
+    _loadSubtitles(path);
   }
+
+  // ── AI Frame Analysis ────────────────────────────────────────────────────────
+
+  void _setupFrameAnalyzer(String videoPath) {
+    final analyzer = ref.read(frameAnalyzerProvider);
+
+    // Register the frame-callback: extract a frame at the current position
+    analyzer.setFrameCallback(() async {
+      if (_currentPath == null || !_isPlaying) return null;
+      return VideoFrameExtractor.extractFrame(_currentPath!, _position);
+    });
+
+    // Listen for results
+    _aiSubscription?.cancel();
+    _aiSubscription = analyzer.resultStream.listen((result) {
+      if (!mounted) return;
+
+      final config = ref.read(appConfigProvider);
+
+      setState(() {
+        _isAnalyzingAI = false;
+
+        if (!_userOverrode) {
+          if (result.shouldBlock) {
+            _isBlurred = true;
+            _warningMessage = result.policyResult.reason;
+            if (config.autoSkipFlagged) {
+              // Skip 30 seconds ahead
+              _player.seek(_position + const Duration(seconds: 30));
+            }
+          } else if (result.shouldBlur && config.enableBlurEffect) {
+            _isBlurred = true;
+            _warningMessage = result.policyResult.reason;
+          } else {
+            _isBlurred = false;
+            _warningMessage = null;
+          }
+        }
+      });
+
+      // Log if enabled
+      if (config.enableLogging &&
+          (result.shouldBlur || result.shouldBlock)) {
+        ref.read(contentLogsProvider.notifier).addLog(
+              ContentLogEntry(
+                timestamp: DateTime.now(),
+                contentType: 'video',
+                filePath: videoPath,
+                action: result.policyResult.action.name,
+                score: result.policyResult.aggregatedScore,
+                reason: result.policyResult.reason,
+              ),
+            );
+      }
+    });
+
+    analyzer.start();
+  }
+
+  // ── Subtitle loading ─────────────────────────────────────────────────────────
+
+  Future<void> _loadSubtitles(String videoPath) async {
+    final track = await loadSubtitleForVideo(ref, videoPath);
+    if (mounted) setState(() => _currentSubtitle = track);
+  }
+
+  Future<void> _pickSubtitleFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['srt', 'vtt', 'ass', 'ssa'],
+    );
+    if (result != null && result.files.isNotEmpty) {
+      final path = result.files.first.path;
+      if (path != null) {
+        final track = await SubtitleParser.parseFile(path);
+        if (mounted) setState(() => _currentSubtitle = track);
+      }
+    }
+  }
+
+  // ── Playback controls ────────────────────────────────────────────────────────
+
+  void _seekBy(Duration delta) {
+    final target = _position + delta;
+    if (target < Duration.zero) {
+      _player.seek(Duration.zero);
+    } else if (target > _duration && _duration > Duration.zero) {
+      _player.seek(_duration);
+    } else {
+      _player.seek(target);
+    }
+  }
+
+  void _toggleFullscreen() {
+    setState(() => _isFullscreen = !_isFullscreen);
+    if (_isFullscreen) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    } else {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
+  }
+
+  // ── Controls auto-hide ───────────────────────────────────────────────────────
+
+  void _startHideTimer() {
+    _hideControlsTimer?.cancel();
+    _hideControlsTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted && _isPlaying) setState(() => _showControls = false);
+    });
+  }
+
+  void _showControlsTemporarily() {
+    if (!_showControls) setState(() => _showControls = true);
+    if (_isPlaying) _startHideTimer();
+  }
+
+  // ── Lifecycle ────────────────────────────────────────────────────────────────
 
   @override
   void dispose() {
+    _hideControlsTimer?.cancel();
+    _aiSubscription?.cancel();
+    final analyzer = ref.read(frameAnalyzerProvider);
+    analyzer.setFrameCallback(null);
+    analyzer.stop();
     _player.dispose();
     super.dispose();
   }
 
+  // ── Build ────────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     if (!_isInitialized) {
-      return const Center(child: CircularProgressIndicator());
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(child: CircularProgressIndicator(color: Colors.green)),
+      );
     }
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: MouseRegion(
-        onHover: (_) => _showControlsTemporarily(),
-        child: GestureDetector(
-          onTap: _toggleControls,
-          onDoubleTap: _toggleFullscreen,
-          child: Stack(
-            children: [
-              // Video View
-              Center(
-                child: _isBlurred
-                    ? _buildBlurredVideo()
-                    : Video(
-                        controller: _controller,
-                        fill: Colors.black,
-                      ),
-              ),
-
-              // Buffering indicator
-              if (_isBuffering)
-                const Center(
-                  child: CircularProgressIndicator(color: Colors.white),
+    return KeyboardShortcutsHandler(
+      onPlayPause: () => _isPlaying ? _player.pause() : _player.play(),
+      onSeekForward: () => _seekBy(const Duration(seconds: 10)),
+      onSeekBackward: () => _seekBy(const Duration(seconds: -10)),
+      onVolumeUp: () => _player.setVolume((_volume * 100 + 10).clamp(0, 100)),
+      onVolumeDown: () => _player.setVolume((_volume * 100 - 10).clamp(0, 100)),
+      onMute: () => _player.setVolume(_volume > 0 ? 0 : 100),
+      onFullscreen: _toggleFullscreen,
+      onOpenFile: () async {
+        final result = await FilePicker.platform
+            .pickFiles(type: FileType.video);
+        if (result != null && result.files.isNotEmpty) {
+          final path = result.files.first.path;
+          if (path != null) await _openFile(path);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: MouseRegion(
+          onHover: (_) => _showControlsTemporarily(),
+          child: GestureDetector(
+            onTap: () {
+              if (_showControls) {
+                setState(() => _showControls = false);
+                _hideControlsTimer?.cancel();
+              } else {
+                _showControlsTemporarily();
+              }
+            },
+            onDoubleTap: _toggleFullscreen,
+            child: Stack(
+              children: [
+                // 1. Video
+                Center(
+                  child: _isBlurred && !_userOverrode
+                      ? _buildBlurredVideo()
+                      : Video(
+                          controller: _controller,
+                          fill: Colors.black,
+                        ),
                 ),
 
-              // AI Analysis indicator
-              if (_isAnalyzing) _buildAnalyzingOverlay(),
+                // 2. Buffering indicator
+                if (_isBuffering)
+                  const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  ),
 
-              // Warning overlay
-              if (_warningMessage != null) _buildWarningOverlay(),
+                // 3. Subtitle overlay
+                if (_currentSubtitle != null && _subtitlesEnabled)
+                  Positioned(
+                    bottom: 90,
+                    left: 16,
+                    right: 16,
+                    child: SubtitleView(
+                      track: _currentSubtitle!,
+                      position: _position,
+                    ),
+                  ),
 
-              // Controls overlay
-              if (_showControls) _buildControlsOverlay(),
+                // 4. Controls overlay
+                if (_showControls) _buildControlsOverlay(),
+
+                // 5. Warning banner
+                if (_warningMessage != null && !_userOverrode)
+                  _buildWarningBanner(),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Blurred video ────────────────────────────────────────────────────────────
+
+  Widget _buildBlurredVideo() {
+    return Stack(
+      children: [
+        // Real video behind the blur
+        Video(controller: _controller, fill: Colors.black),
+        // Real BackdropFilter blur
+        BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+          child: Container(color: Colors.black.withValues(alpha: 0.55)),
+        ),
+        // Warning card
+        Center(
+          child: BlurOverlay(
+            isBlurred: true,
+            warningMessage: _warningMessage,
+            onShowContent: () => setState(() {
+              _userOverrode = true;
+              _isBlurred = false;
+            }),
+            child: const SizedBox.shrink(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Warning banner ───────────────────────────────────────────────────────────
+
+  Widget _buildWarningBanner() {
+    return Positioned(
+      top: 60,
+      left: 16,
+      right: 16,
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.orange.withValues(alpha: 0.9),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.warning_amber, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  _warningMessage ?? 'Content flagged by AI',
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 20),
+                onPressed: () => setState(() => _warningMessage = null),
+              ),
             ],
           ),
         ),
@@ -130,106 +399,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     );
   }
 
-  Widget _buildBlurredVideo() {
-    return Stack(
-      children: [
-        // TODO: Implement actual blur filter
-        Container(
-          color: Colors.black,
-          child: const Center(
-            child: Icon(
-              Icons.visibility_off,
-              size: 64,
-              color: Colors.white38,
-            ),
-          ),
-        ),
-        Center(
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.red.withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.warning, color: Colors.white),
-                SizedBox(width: 8),
-                Text(
-                  'Content blurred for safety',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAnalyzingOverlay() {
-    return Positioned(
-      top: 16,
-      right: 16,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.green.withValues(alpha: 0.8),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            ),
-            SizedBox(width: 8),
-            Text(
-              'AI Analyzing...',
-              style: TextStyle(color: Colors.white, fontSize: 12),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWarningOverlay() {
-    return Positioned(
-      top: 60,
-      left: 16,
-      right: 16,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.orange.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.info, color: Colors.white),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                _warningMessage!,
-                style: const TextStyle(color: Colors.white),
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.close, color: Colors.white),
-              onPressed: () => setState(() => _warningMessage = null),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // ── Controls overlay ─────────────────────────────────────────────────────────
 
   Widget _buildControlsOverlay() {
     return Container(
@@ -248,12 +418,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       ),
       child: Column(
         children: [
-          // Top bar
           _buildTopBar(),
-          
           const Spacer(),
-          
-          // Bottom controls
           _buildBottomControls(),
         ],
       ),
@@ -267,38 +433,41 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         children: [
           IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(context).maybePop(),
           ),
           const SizedBox(width: 8),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Video Player',
-              style: TextStyle(
+              _currentPath?.split(r'\').last.split('/').last ?? 'Video Player',
+              style: const TextStyle(
                 color: Colors.white,
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          // AI Status indicator
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.green),
+          // AI analyzing indicator
+          if (_isAnalyzingAI)
+            const AIStatusIndicator(isAnalyzing: true)
+          else
+            AIStatusIndicator(isSafe: !_isBlurred),
+          const SizedBox(width: 8),
+          // Subtitles toggle
+          IconButton(
+            icon: Icon(
+              _subtitlesEnabled ? Icons.subtitles : Icons.subtitles_off,
+              color: _subtitlesEnabled ? Colors.green : Colors.white54,
             ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.shield, color: Colors.green, size: 14),
-                SizedBox(width: 4),
-                Text(
-                  'Protected',
-                  style: TextStyle(color: Colors.green, fontSize: 12),
-                ),
-              ],
-            ),
+            tooltip: 'Toggle Subtitles',
+            onPressed: () =>
+                setState(() => _subtitlesEnabled = !_subtitlesEnabled),
+          ),
+          // Load subtitle file
+          IconButton(
+            icon: const Icon(Icons.upload_file, color: Colors.white70),
+            tooltip: 'Load Subtitle File',
+            onPressed: _pickSubtitleFile,
           ),
         ],
       ),
@@ -310,33 +479,39 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Progress bar
+          // Progress row
           Row(
             children: [
               Text(
                 _formatDuration(_position),
-                style: const TextStyle(color: Colors.white, fontSize: 12),
+                style:
+                    const TextStyle(color: Colors.white, fontSize: 12),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: SliderTheme(
                   data: SliderThemeData(
                     trackHeight: 4,
-                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+                    thumbShape:
+                        const RoundSliderThumbShape(enabledThumbRadius: 6),
+                    overlayShape:
+                        const RoundSliderOverlayShape(overlayRadius: 12),
                     activeTrackColor: Colors.green,
                     inactiveTrackColor: Colors.white24,
                     thumbColor: Colors.green,
                   ),
                   child: Slider(
                     value: _duration.inMilliseconds > 0
-                        ? _position.inMilliseconds / _duration.inMilliseconds
+                        ? (_position.inMilliseconds /
+                                _duration.inMilliseconds)
+                            .clamp(0.0, 1.0)
                         : 0,
                     onChanged: (value) {
-                      final position = Duration(
-                        milliseconds: (value * _duration.inMilliseconds).round(),
+                      final pos = Duration(
+                        milliseconds:
+                            (value * _duration.inMilliseconds).round(),
                       );
-                      _player.seek(position);
+                      _player.seek(pos);
                     },
                   ),
                 ),
@@ -344,13 +519,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               const SizedBox(width: 8),
               Text(
                 _formatDuration(_duration),
-                style: const TextStyle(color: Colors.white, fontSize: 12),
+                style:
+                    const TextStyle(color: Colors.white, fontSize: 12),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          
-          // Control buttons
+          // Buttons row
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -360,76 +535,64 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   _volume > 0 ? Icons.volume_up : Icons.volume_off,
                   color: Colors.white,
                 ),
-                onPressed: () {
-                  _player.setVolume(_volume > 0 ? 0 : 100);
-                },
+                onPressed: () =>
+                    _player.setVolume(_volume > 0 ? 0 : 100),
               ),
               SizedBox(
-                width: 100,
+                width: 90,
                 child: Slider(
-                  value: _volume,
-                  onChanged: (value) {
-                    _player.setVolume((value * 100).round().toDouble());
-                  },
+                  value: _volume.clamp(0, 1),
+                  onChanged: (v) =>
+                      _player.setVolume((v * 100).round().toDouble()),
                   activeColor: Colors.white,
                   inactiveColor: Colors.white24,
                 ),
               ),
-              
-              const SizedBox(width: 24),
-              
-              // Rewind 10s
+              const SizedBox(width: 16),
+              // Rewind
               IconButton(
-                icon: const Icon(Icons.replay_10, color: Colors.white, size: 32),
-                onPressed: () {
-                  final newPosition = _position - const Duration(seconds: 10);
-                  _player.seek(newPosition < Duration.zero ? Duration.zero : newPosition);
-                },
+                icon: const Icon(Icons.replay_10,
+                    color: Colors.white, size: 30),
+                onPressed: () => _seekBy(const Duration(seconds: -10)),
               ),
-              
               // Play/Pause
               IconButton(
                 icon: Icon(
-                  _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                  _isPlaying
+                      ? Icons.pause_circle_filled
+                      : Icons.play_circle_filled,
                   color: Colors.white,
-                  size: 56,
+                  size: 52,
                 ),
-                onPressed: () {
-                  _isPlaying ? _player.pause() : _player.play();
-                },
+                onPressed: () =>
+                    _isPlaying ? _player.pause() : _player.play(),
               ),
-              
-              // Forward 10s
+              // Forward
               IconButton(
-                icon: const Icon(Icons.forward_10, color: Colors.white, size: 32),
-                onPressed: () {
-                  final newPosition = _position + const Duration(seconds: 10);
-                  _player.seek(newPosition > _duration ? _duration : newPosition);
-                },
+                icon: const Icon(Icons.forward_10,
+                    color: Colors.white, size: 30),
+                onPressed: () => _seekBy(const Duration(seconds: 10)),
               ),
-              
-              const SizedBox(width: 24),
-              
-              // Playback speed
+              const SizedBox(width: 16),
+              // Speed
               PopupMenuButton<double>(
                 icon: const Icon(Icons.speed, color: Colors.white),
-                onSelected: (speed) {
-                  _player.setRate(speed);
-                },
+                onSelected: _player.setRate,
                 itemBuilder: (context) => [
-                  const PopupMenuItem(value: 0.5, child: Text('0.5x')),
-                  const PopupMenuItem(value: 0.75, child: Text('0.75x')),
-                  const PopupMenuItem(value: 1.0, child: Text('1.0x')),
-                  const PopupMenuItem(value: 1.25, child: Text('1.25x')),
-                  const PopupMenuItem(value: 1.5, child: Text('1.5x')),
-                  const PopupMenuItem(value: 2.0, child: Text('2.0x')),
+                  const PopupMenuItem(value: 0.5, child: Text('0.5×')),
+                  const PopupMenuItem(value: 0.75, child: Text('0.75×')),
+                  const PopupMenuItem(value: 1.0, child: Text('1.0×')),
+                  const PopupMenuItem(value: 1.25, child: Text('1.25×')),
+                  const PopupMenuItem(value: 1.5, child: Text('1.5×')),
+                  const PopupMenuItem(value: 2.0, child: Text('2.0×')),
                 ],
               ),
-              
               // Fullscreen
               IconButton(
                 icon: Icon(
-                  _isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
+                  _isFullscreen
+                      ? Icons.fullscreen_exit
+                      : Icons.fullscreen,
                   color: Colors.white,
                 ),
                 onPressed: _toggleFullscreen,
@@ -441,35 +604,15 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     );
   }
 
-  void _toggleControls() {
-    setState(() => _showControls = !_showControls);
-  }
+  // ── Helpers ──────────────────────────────────────────────────────────────────
 
-  void _showControlsTemporarily() {
-    if (!_showControls) {
-      setState(() => _showControls = true);
+  String _formatDuration(Duration d) {
+    final h = d.inHours;
+    final m = d.inMinutes.remainder(60);
+    final s = d.inSeconds.remainder(60);
+    if (h > 0) {
+      return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
     }
-    // Auto-hide after 3 seconds of no interaction
-    // TODO: Implement auto-hide timer
-  }
-
-  void _toggleFullscreen() {
-    setState(() => _isFullscreen = !_isFullscreen);
-    if (_isFullscreen) {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    } else {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    }
-  }
-
-  String _formatDuration(Duration duration) {
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60);
-    final seconds = duration.inSeconds.remainder(60);
-    
-    if (hours > 0) {
-      return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-    }
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 }

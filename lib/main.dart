@@ -19,6 +19,7 @@ import 'ui/logs/logs_screen.dart';
 import 'modules/video_player/video_player_screen.dart';
 import 'modules/audio_player/audio_player_screen.dart';
 import 'modules/image_viewer/image_viewer_screen.dart';
+import 'modules/translation/translation_screen.dart';
 import 'core/theme.dart';
 import 'core/language_provider.dart';
 import 'providers.dart';
@@ -169,8 +170,10 @@ class _MainNavigationViewState extends State<MainNavigationView>
             ? ImageViewerScreen(imagePath: _currentImagePath)
             : _buildOpenFilePrompt('image', FileType.image);
       case 4:
-        return const LogsScreen();
+        return const TranslationScreen();
       case 5:
+        return const LogsScreen();
+      case 6:
         return const SettingsScreen();
       default:
         return const HomeScreen();
@@ -307,6 +310,11 @@ class _MainNavigationViewState extends State<MainNavigationView>
                 icon: Icon(Icons.image_outlined),
                 selectedIcon: Icon(Icons.image),
                 label: Text('Images'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.translate_outlined),
+                selectedIcon: Icon(Icons.translate),
+                label: Text('Translate'),
               ),
               NavigationRailDestination(
                 icon: Icon(Icons.history_outlined),

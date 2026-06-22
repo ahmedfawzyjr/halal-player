@@ -16,38 +16,85 @@ abstract class TranslationService {
   Future<bool> isAvailable();
 }
 
-/// Argos Translate service (offline)
-/// Note: Requires Python subprocess with argostranslate installed
+/// Argos Translate service (offline — calls Python via subprocess)
+///
+/// Requires Python + argostranslate + langdetect:
+///   pip install argostranslate langdetect
 class ArgosTranslateService implements TranslationService {
   ArgosTranslateService();
 
   @override
   Future<String> translate(
-    String text, 
-    String targetLanguage, 
-    {String? sourceLanguage}
-  ) async {
-    // This would call argostranslate via Python subprocess
-    // For now, return placeholder
-    // TODO: Implement actual Argos Translate integration
-    return text; // Placeholder
+    String text,
+    String targetLanguage, {
+    String? sourceLanguage,
+  }) async {
+    try {
+      final from = sourceLanguage ?? await detectLanguage(text);
+      if (from == targetLanguage) return text;
+
+      final escaped = text
+          .replaceAll(r'\', r'\\')
+          .replaceAll('"', r'\"')
+          .replaceAll('\n', r'\n');
+
+      final script = '''
+import argostranslate.package
+import argostranslate.translate
+result = argostranslate.translate.translate("$escaped", "$from", "$targetLanguage")
+print(result, end="")
+''';
+
+      final result = await Process.run('python', ['-c', script]);
+      if (result.exitCode == 0) {
+        final output = result.stdout.toString().trim();
+        return output.isNotEmpty ? output : text;
+      }
+      return text;
+    } catch (_) {
+      return text;
+    }
   }
 
   @override
   Future<String> detectLanguage(String text) async {
-    // TODO: Implement language detection
-    return 'en';
+    try {
+      final snippet = text.length > 200 ? text.substring(0, 200) : text;
+      final escaped = snippet.replaceAll('"', r'\"').replaceAll('\n', ' ');
+      final script =
+          'from langdetect import detect; print(detect("$escaped"), end="")';
+
+      final result = await Process.run('python', ['-c', script]);
+      if (result.exitCode == 0) {
+        final lang = result.stdout.toString().trim();
+        return lang.isNotEmpty ? lang : 'en';
+      }
+      return 'en';
+    } catch (_) {
+      return 'en';
+    }
   }
 
   @override
   Future<List<String>> getSupportedLanguages() async {
-    return ['en', 'ar', 'fr', 'de', 'es', 'tr', 'ru', 'zh', 'ja'];
+    return [
+      'en', 'ar', 'fr', 'de', 'es', 'tr', 'ru', 'zh', 'ja',
+      'ur', 'fa', 'id', 'ms', 'bn', 'hi',
+    ];
   }
 
   @override
   Future<bool> isAvailable() async {
-    // TODO: Check if Argos Translate is installed
-    return false;
+    try {
+      final result = await Process.run('python', [
+        '-c',
+        'import argostranslate.translate; print("ok", end="")',
+      ]);
+      return result.exitCode == 0 &&
+          result.stdout.toString().trim() == 'ok';
+    } catch (_) {
+      return false;
+    }
   }
 }
 
