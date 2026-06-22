@@ -13,6 +13,7 @@
   <img src="https://img.shields.io/badge/Platform-Windows-0078D6?logo=windows" alt="Windows">
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License">
   <img src="https://img.shields.io/badge/AI-Powered-orange" alt="AI">
+  <img src="https://img.shields.io/badge/Tests-Passed-brightgreen?logo=dart" alt="Tests">
 </p>
 
 ---
@@ -22,25 +23,27 @@
 ### 🛡️ AI Content Protection
 - **5 Filtering Modes**: Strict Islamic, Family, Teen, Educational, Developer
 - **On-Device AI**: NSFW detection using OpenNSFW2 & NudeNet
-- **Real-time Analysis**: Frame-by-frame video scanning
-- **Blur/Block Actions**: Configurable content handling
+- **Real-time Analysis**: Frame-by-frame video scanning via FFmpeg and Python AI
+- **Blur/Block Actions**: High-performance backdrop blur filter for flagged content
+- **Islamic Subtitle Filter**: Built-in word list filtering with regex matches to censor profanity in subtitles
 
 ### 🎥 Media Players
-- **Video Player**: Powered by media_kit with full controls
-- **Audio Player**: just_audio with waveform visualization
-- **Image Viewer**: AI-scanned before display with zoom/pan
+- **Video Player**: Powered by media_kit with backdrop blur filter overlay, custom overlays, and subtitles integration
+- **Audio Player**: just_audio with real waveform visualization (CustomPainter) and metadata extraction (Title/Artist/Album Art)
+- **Image Viewer**: Real-time AI scanning before display with zoom and pan controls
 
 ### 🌍 Translation System
 - **15 Languages**: EN, AR, FR, DE, ES, TR, ID, MS, UR, FA, BN, ZH, JA, RU, HI
 - **RTL Support**: Arabic, Urdu, Persian
 - **Auto Subtitles**: SRT, VTT, ASS format support
 - **OpenSubtitles**: Auto-download by movie hash
-- **AI Translation**: Whisper STT + Argos Translate (offline)
+- **AI Translation & STT**: Whisper STT (cloud/local) + Argos Translate (full offline python subprocess integration with language detection)
+- **Translation Screen UI**: Comprehensive interface for file translation with real-time progress indicators and preview panels
 
 ### 🎨 Modern UI
 - **Material 3 Design**: Beautiful dark/light themes
-- **Keyboard Shortcuts**: Full media control
-- **Recent Files**: Persistent history
+- **Keyboard Shortcuts**: Space (play/pause), F (fullscreen), M (mute), arrows (seek)
+- **Recent Files**: Persistent dashboard showing last opened files with navigation
 
 ---
 
@@ -61,7 +64,9 @@
 ### Prerequisites
 - Flutter SDK 3.7+
 - Windows 10/11
+- **Windows Developer Mode Enabled** (required for plugin symlink support: `start ms-settings:developers`)
 - Visual Studio with C++ tools
+- Python 3.8+ (for offline AI and Translation modules)
 
 ### Installation
 
@@ -72,6 +77,9 @@ cd Halal-Player
 
 # Install dependencies
 flutter pub get
+
+# Install Python requirements (Optional, for offline AI/Translation)
+pip install argostranslate langdetect openai-whisper
 
 # Run the app
 flutter run -d windows
@@ -89,23 +97,23 @@ flutter build windows --release
 
 ```
 lib/
-├── main.dart              # App entry point
-├── providers.dart         # Riverpod state management
-├── core/                  # Config, themes, engine
-├── modules/               # Video, audio, subtitles, translation
-├── ai/                    # Frame & image analyzers
-├── ui/                    # Home, settings, logs screens
-└── l10n/                  # 15 language files
+├── main.dart              # App entry point & navigation setup
+├── providers.dart         # Riverpod state management & Hive configs
+├── core/                  # Config, themes, policy engine
+├── modules/               # Video, audio, subtitles, translation modules
+├── ai/                    # Frame & image analyzers, detectors
+├── ui/                    # Home, settings, logs, translation screens
+└── l10n/                  # 15 language files (ARB)
 
-assets/
-├── img/                   # Logo and branding
-├── models/                # AI models (ONNX)
-└── icons/                 # App icons
+test/                      # Comprehensive test suite (41 tests)
+├── core/                  # Policy engine and Islamic filter tests
+├── modules/               # Subtitle parser and translator tests
+└── ui/                    # Settings screen UI widget tests
 ```
 
 ---
 
-## 🔧 Configuration
+## 🔧 Configuration & Setup
 
 ### AI Models (Optional)
 Download and place in `assets/models/`:
@@ -119,14 +127,25 @@ pip install openai-whisper
 
 ### Argos Translate (Optional)
 ```bash
-pip install argostranslate
+pip install argostranslate langdetect
+```
+
+---
+
+## 🧪 Testing
+
+The repository contains 41 tests verifying all major logical blocks (Policy Engine, Subtitle Parsers, Translation workflows, Islamic Filtering, and settings interface).
+
+To run the automated tests:
+```bash
+flutter test
 ```
 
 ---
 
 ## 🔒 Privacy
 
-- ✅ **100% Offline** - All AI runs locally
+- ✅ **100% Offline** - All AI and Argos translations run locally
 - ✅ **No Cloud** - Your media never leaves your device
 - ✅ **No Tracking** - Zero analytics or telemetry
 - ✅ **Open Source** - Fully auditable code
@@ -155,6 +174,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 - [media_kit](https://github.com/media-kit/media-kit)
 - [OpenSubtitles](https://opensubtitles.com)
 - [OpenAI Whisper](https://github.com/openai/whisper)
+- [Argos Translate](https://github.com/argostranslate/argostranslate)
 
 ---
 
