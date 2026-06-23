@@ -248,9 +248,9 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen>
       onMute: () => _player.setVolume(_volume > 0 ? 0 : 1),
       onOpenFile: _pickFiles,
       child: Scaffold(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: const Color(0xFF2A2A2A),
+          backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
           title: Text(_currentTitle ?? 'Audio Player',
               overflow: TextOverflow.ellipsis),
           actions: [

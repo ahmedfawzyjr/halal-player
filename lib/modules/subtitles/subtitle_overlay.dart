@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'subtitle_model.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Subtitle overlay widget
 class SubtitleOverlay extends StatelessWidget {
@@ -108,7 +109,7 @@ class SubtitleSettingsPanel extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Subtitle Settings',
+                AppLocalizations.of(context)!.subtitleSettings,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               IconButton(
@@ -121,20 +122,20 @@ class SubtitleSettingsPanel extends StatelessWidget {
           
           // Track selection
           if (availableTracks.isNotEmpty) ...[
-            const Text('Track'),
+            Text(AppLocalizations.of(context)!.track),
             const SizedBox(height: 8),
             DropdownButton<int?>(
               isExpanded: true,
               value: selectedTrackIndex,
               items: [
-                const DropdownMenuItem<int?>(
+                DropdownMenuItem<int?>(
                   value: null,
-                  child: Text('Off'),
+                  child: Text(AppLocalizations.of(context)!.off),
                 ),
                 ...availableTracks.asMap().entries.map((entry) {
                   return DropdownMenuItem<int>(
                     value: entry.key,
-                    child: Text(entry.value.title ?? 'Track ${entry.key + 1}'),
+                    child: Text(entry.value.title ?? '${AppLocalizations.of(context)!.track} ${entry.key + 1}'),
                   );
                 }),
               ],
@@ -146,7 +147,7 @@ class SubtitleSettingsPanel extends StatelessWidget {
           // Font size
           Row(
             children: [
-              const Text('Font Size'),
+              Text(AppLocalizations.of(context)!.fontSize),
               Expanded(
                 child: Slider(
                   value: style.fontSize,
@@ -164,7 +165,7 @@ class SubtitleSettingsPanel extends StatelessWidget {
           // Position
           Row(
             children: [
-              const Text('Position'),
+              Text(AppLocalizations.of(context)!.position),
               const SizedBox(width: 16),
               SegmentedButton<SubtitlePosition>(
                 segments: const [
@@ -194,7 +195,7 @@ class SubtitleSettingsPanel extends StatelessWidget {
           // Color options
           Row(
             children: [
-              const Text('Font Color'),
+              Text(AppLocalizations.of(context)!.fontColor),
               const SizedBox(width: 16),
               ...[ Colors.white, Colors.yellow, Colors.cyan, Colors.lime ].map((color) {
                 return Padding(

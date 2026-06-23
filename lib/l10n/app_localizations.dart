@@ -6,20 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_ar.dart';
-import 'app_localizations_bn.dart';
-import 'app_localizations_de.dart';
 import 'app_localizations_en.dart';
-import 'app_localizations_es.dart';
-import 'app_localizations_fa.dart';
-import 'app_localizations_fr.dart';
-import 'app_localizations_hi.dart';
-import 'app_localizations_id.dart';
-import 'app_localizations_ja.dart';
-import 'app_localizations_ms.dart';
-import 'app_localizations_ru.dart';
-import 'app_localizations_tr.dart';
-import 'app_localizations_ur.dart';
-import 'app_localizations_zh.dart';
 
 // ignore_for_file: type=lint
 
@@ -108,20 +95,7 @@ abstract class AppLocalizations {
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('ar'),
-    Locale('bn'),
-    Locale('de'),
     Locale('en'),
-    Locale('es'),
-    Locale('fa'),
-    Locale('fr'),
-    Locale('hi'),
-    Locale('id'),
-    Locale('ja'),
-    Locale('ms'),
-    Locale('ru'),
-    Locale('tr'),
-    Locale('ur'),
-    Locale('zh'),
   ];
 
   /// The title of the application
@@ -777,6 +751,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your privacy is protected - this was analyzed locally'**
   String get privacyProtected;
+
+  /// No description provided for @aboutHalalPlayer.
+  ///
+  /// In en, this message translates to:
+  /// **'About Halal Player'**
+  String get aboutHalalPlayer;
+
+  /// No description provided for @developerRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer'**
+  String get developerRole;
+
+  /// No description provided for @githubRepository.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub Repository'**
+  String get githubRepository;
+
+  /// No description provided for @reportIssue.
+  ///
+  /// In en, this message translates to:
+  /// **'Report Issue'**
+  String get reportIssue;
+
+  /// No description provided for @madeWithLove.
+  ///
+  /// In en, this message translates to:
+  /// **'Made with ❤️ for the Muslim community'**
+  String get madeWithLove;
+
+  /// No description provided for @allRightsReserved.
+  ///
+  /// In en, this message translates to:
+  /// **'© 2025 Ahmed Fawzy. All rights reserved.'**
+  String get allRightsReserved;
+
+  /// No description provided for @aboutDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Halal Player is a privacy-first media player with AI-powered content filtering for Islamic compliance. All processing happens locally on your device - your media never leaves your computer.'**
+  String get aboutDesc;
+
+  /// No description provided for @features.
+  ///
+  /// In en, this message translates to:
+  /// **'Features'**
+  String get features;
+
+  /// No description provided for @aiContentFiltering.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Content Filtering'**
+  String get aiContentFiltering;
+
+  /// No description provided for @fifteenLanguages.
+  ///
+  /// In en, this message translates to:
+  /// **'15 Languages'**
+  String get fifteenLanguages;
+
+  /// No description provided for @oneHundredPercentOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'100% Offline'**
+  String get oneHundredPercentOffline;
+
+  /// No description provided for @autoSubtitles.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Subtitles'**
+  String get autoSubtitles;
+
+  /// No description provided for @viewAllShortcuts.
+  ///
+  /// In en, this message translates to:
+  /// **'View All Shortcuts'**
+  String get viewAllShortcuts;
+
+  /// No description provided for @browse.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse'**
+  String get browse;
+
+  /// No description provided for @track.
+  ///
+  /// In en, this message translates to:
+  /// **'Track'**
+  String get track;
+
+  /// No description provided for @off.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get off;
+
+  /// No description provided for @noImageSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No image selected'**
+  String get noImageSelected;
+
+  /// No description provided for @openImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Image'**
+  String get openImage;
+
+  /// No description provided for @tryAnother.
+  ///
+  /// In en, this message translates to:
+  /// **'Try Another'**
+  String get tryAnother;
+
+  /// No description provided for @downloadSubtitlesDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Download subtitles from OpenSubtitles'**
+  String get downloadSubtitlesDesc;
+
+  /// No description provided for @preferredSubtitleLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferred Subtitle Language'**
+  String get preferredSubtitleLanguage;
+
+  /// No description provided for @filterInappropriateWords.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter inappropriate words in subtitles'**
+  String get filterInappropriateWords;
+
+  /// No description provided for @keyboardShortcuts.
+  ///
+  /// In en, this message translates to:
+  /// **'Keyboard Shortcuts'**
+  String get keyboardShortcuts;
+
+  /// No description provided for @justNow.
+  ///
+  /// In en, this message translates to:
+  /// **'just now'**
+  String get justNow;
+
+  /// No description provided for @minutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}m ago'**
+  String minutesAgo(int count);
+
+  /// No description provided for @hoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}h ago'**
+  String hoursAgo(int count);
+
+  /// No description provided for @daysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}d ago'**
+  String daysAgo(int count);
 }
 
 class _AppLocalizationsDelegate
@@ -789,23 +925,8 @@ class _AppLocalizationsDelegate
   }
 
   @override
-  bool isSupported(Locale locale) => <String>[
-    'ar',
-    'bn',
-    'de',
-    'en',
-    'es',
-    'fa',
-    'fr',
-    'hi',
-    'id',
-    'ja',
-    'ms',
-    'ru',
-    'tr',
-    'ur',
-    'zh',
-  ].contains(locale.languageCode);
+  bool isSupported(Locale locale) =>
+      <String>['ar', 'en'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -816,34 +937,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   switch (locale.languageCode) {
     case 'ar':
       return AppLocalizationsAr();
-    case 'bn':
-      return AppLocalizationsBn();
-    case 'de':
-      return AppLocalizationsDe();
     case 'en':
       return AppLocalizationsEn();
-    case 'es':
-      return AppLocalizationsEs();
-    case 'fa':
-      return AppLocalizationsFa();
-    case 'fr':
-      return AppLocalizationsFr();
-    case 'hi':
-      return AppLocalizationsHi();
-    case 'id':
-      return AppLocalizationsId();
-    case 'ja':
-      return AppLocalizationsJa();
-    case 'ms':
-      return AppLocalizationsMs();
-    case 'ru':
-      return AppLocalizationsRu();
-    case 'tr':
-      return AppLocalizationsTr();
-    case 'ur':
-      return AppLocalizationsUr();
-    case 'zh':
-      return AppLocalizationsZh();
   }
 
   throw FlutterError(

@@ -18,6 +18,8 @@ import 'ui/setup/setup_screen.dart';
 import 'ui/home/home_screen.dart';
 import 'ui/settings/settings_screen.dart';
 import 'ui/logs/logs_screen.dart';
+import 'ui/mobile/mobile_splash_screen.dart';
+import 'ui/mobile/mobile_onboarding_screen.dart';
 import 'modules/video_player/video_player_screen.dart';
 import 'modules/audio_player/audio_player_screen.dart';
 import 'modules/image_viewer/image_viewer_screen.dart';
@@ -99,6 +101,8 @@ class AppEntryPoint extends StatefulWidget {
 
 class _AppEntryPointState extends State<AppEntryPoint> {
   bool? _isFirstRun;
+  bool _splashFinished = false;
+  bool _onboardingFinished = false;
 
   @override
   void initState() {
@@ -121,7 +125,29 @@ class _AppEntryPointState extends State<AppEntryPoint> {
       );
     }
 
-    if (_isFirstRun!) {
+    final isMobile = Platform.isAndroid || Platform.isIOS;
+
+    if (isMobile && !_splashFinished) {
+      return MobileSplashScreen(
+        onFinished: () {
+          setState(() {
+            _splashFinished = true;
+          });
+        },
+      );
+    }
+
+    if (isMobile && _isFirstRun! && !_onboardingFinished) {
+      return MobileOnboardingScreen(
+        onFinished: () {
+          setState(() {
+            _onboardingFinished = true;
+          });
+        },
+      );
+    }
+
+    if (_isFirstRun! && (!isMobile || _onboardingFinished)) {
       return const SetupWizardScreen();
     }
 
@@ -255,7 +281,6 @@ class _MainNavigationViewState extends State<MainNavigationView>
     final isDesktop = Platform.isWindows || Platform.isMacOS || Platform.isLinux;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF2A2A2A),
         title: isDesktop
             ? GestureDetector(
                 onPanStart: (_) => windowManager.startDragging(),
@@ -303,59 +328,108 @@ class _MainNavigationViewState extends State<MainNavigationView>
               ]
             : null,
       ),
-      body: Row(
-        children: [
-          NavigationRail(
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: (index) {
-              setState(() => _selectedIndex = index);
-            },
-            backgroundColor: const Color(0xFF2A2A2A),
-            labelType: NavigationRailLabelType.all,
-            destinations: const [
-              NavigationRailDestination(
-                icon: Icon(Icons.home_outlined),
-                selectedIcon: Icon(Icons.home),
-                label: Text('Home'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.videocam_outlined),
-                selectedIcon: Icon(Icons.videocam),
-                label: Text('Video'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.audiotrack_outlined),
-                selectedIcon: Icon(Icons.audiotrack),
-                label: Text('Audio'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.image_outlined),
-                selectedIcon: Icon(Icons.image),
-                label: Text('Images'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.translate_outlined),
-                selectedIcon: Icon(Icons.translate),
-                label: Text('Translate'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.history_outlined),
-                selectedIcon: Icon(Icons.history),
-                label: Text('Logs'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.settings_outlined),
-                selectedIcon: Icon(Icons.settings),
-                label: Text('Settings'),
-              ),
-            ],
-          ),
-          const VerticalDivider(thickness: 1, width: 1),
-          Expanded(
-            child: _getScreen(_selectedIndex),
-          ),
-        ],
-      ),
+      body: MediaQuery.of(context).size.width < 600
+          ? _getScreen(_selectedIndex)
+          : Row(
+              children: [
+                NavigationRail(
+                  selectedIndex: _selectedIndex,
+                  onDestinationSelected: (index) {
+                    setState(() => _selectedIndex = index);
+                  },
+                  labelType: NavigationRailLabelType.all,
+                  destinations: const [
+                    NavigationRailDestination(
+                      icon: Icon(Icons.home_outlined),
+                      selectedIcon: Icon(Icons.home),
+                      label: Text('Home'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.videocam_outlined),
+                      selectedIcon: Icon(Icons.videocam),
+                      label: Text('Video'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.audiotrack_outlined),
+                      selectedIcon: Icon(Icons.audiotrack),
+                      label: Text('Audio'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.image_outlined),
+                      selectedIcon: Icon(Icons.image),
+                      label: Text('Images'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.translate_outlined),
+                      selectedIcon: Icon(Icons.translate),
+                      label: Text('Translate'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.history_outlined),
+                      selectedIcon: Icon(Icons.history),
+                      label: Text('Logs'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.settings_outlined),
+                      selectedIcon: Icon(Icons.settings),
+                      label: Text('Settings'),
+                    ),
+                  ],
+                ),
+                const VerticalDivider(thickness: 1, width: 1),
+                Expanded(
+                  child: _getScreen(_selectedIndex),
+                ),
+              ],
+            ),
+      bottomNavigationBar: MediaQuery.of(context).size.width < 600
+          ? BottomNavigationBar(
+              currentIndex: _selectedIndex,
+              onTap: (index) {
+                setState(() => _selectedIndex = index);
+              },
+              type: BottomNavigationBarType.fixed,
+              selectedFontSize: 10,
+              unselectedFontSize: 9,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home_outlined, size: 20),
+                  activeIcon: Icon(Icons.home, size: 20),
+                  label: 'Home',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.videocam_outlined, size: 20),
+                  activeIcon: Icon(Icons.videocam, size: 20),
+                  label: 'Video',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.audiotrack_outlined, size: 20),
+                  activeIcon: Icon(Icons.audiotrack, size: 20),
+                  label: 'Audio',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.image_outlined, size: 20),
+                  activeIcon: Icon(Icons.image, size: 20),
+                  label: 'Images',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.translate_outlined, size: 20),
+                  activeIcon: Icon(Icons.translate, size: 20),
+                  label: 'Translate',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.history_outlined, size: 20),
+                  activeIcon: Icon(Icons.history, size: 20),
+                  label: 'Logs',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.settings_outlined, size: 20),
+                  activeIcon: Icon(Icons.settings, size: 20),
+                  label: 'Settings',
+                ),
+              ],
+            )
+          : null,
     );
   }
 }

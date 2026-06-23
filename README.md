@@ -33,8 +33,8 @@
 - **Image Viewer**: Real-time AI scanning before display with zoom and pan controls
 
 ### 🌍 Translation System
-- **15 Languages**: EN, AR, FR, DE, ES, TR, ID, MS, UR, FA, BN, ZH, JA, RU, HI
-- **RTL Support**: Arabic, Urdu, Persian
+- **2 Languages**: English and Arabic
+- **RTL Support**: Arabic
 - **Auto Subtitles**: SRT, VTT, ASS format support
 - **OpenSubtitles**: Auto-download by movie hash
 - **AI Translation & STT**: Whisper STT (cloud/local) + Argos Translate (full offline python subprocess integration with language detection)
@@ -103,7 +103,7 @@ lib/
 ├── modules/               # Video, audio, subtitles, translation modules
 ├── ai/                    # Frame & image analyzers, detectors
 ├── ui/                    # Home, settings, logs, translation screens
-└── l10n/                  # 15 language files (ARB)
+└── l10n/                  # 2 language files (ARB)
 
 test/                      # Comprehensive test suite (41 tests)
 ├── core/                  # Policy engine and Islamic filter tests
@@ -129,6 +129,20 @@ pip install openai-whisper
 ```bash
 pip install argostranslate langdetect
 ```
+
+### Android Release & Keystore Configuration
+For Google Play deployment, Android releases are signed using an upload keystore. 
+1. The signing configuration is defined in the `android/key.properties` file.
+2. The keystore is stored in `android/app/upload-keystore.jks`.
+3. To configure your keys, create a `.env` file in the root directory (based on `.env.example`) to document your passwords:
+```env
+STORE_PASSWORD=your_store_password
+KEY_PASSWORD=your_key_password
+KEY_ALIAS=upload
+STORE_FILE=upload-keystore.jks
+```
+
+Both `.env` and `android/key.properties` are listed in `.gitignore` to prevent committing credentials to source control.
 
 ---
 

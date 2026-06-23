@@ -27,19 +27,6 @@ class AppLanguage {
 const List<AppLanguage> supportedLanguages = [
   AppLanguage(code: 'en', name: 'English', nativeName: 'English'),
   AppLanguage(code: 'ar', name: 'Arabic', nativeName: 'العربية', isRTL: true),
-  AppLanguage(code: 'fr', name: 'French', nativeName: 'Français'),
-  AppLanguage(code: 'de', name: 'German', nativeName: 'Deutsch'),
-  AppLanguage(code: 'es', name: 'Spanish', nativeName: 'Español'),
-  AppLanguage(code: 'tr', name: 'Turkish', nativeName: 'Türkçe'),
-  AppLanguage(code: 'id', name: 'Indonesian', nativeName: 'Bahasa Indonesia'),
-  AppLanguage(code: 'ms', name: 'Malay', nativeName: 'Bahasa Melayu'),
-  AppLanguage(code: 'ur', name: 'Urdu', nativeName: 'اردو', isRTL: true),
-  AppLanguage(code: 'fa', name: 'Persian', nativeName: 'فارسی', isRTL: true),
-  AppLanguage(code: 'bn', name: 'Bengali', nativeName: 'বাংলা'),
-  AppLanguage(code: 'zh', name: 'Chinese', nativeName: '中文'),
-  AppLanguage(code: 'ja', name: 'Japanese', nativeName: '日本語'),
-  AppLanguage(code: 'ru', name: 'Russian', nativeName: 'Русский'),
-  AppLanguage(code: 'hi', name: 'Hindi', nativeName: 'हिंदी'),
 ];
 
 /// Get list of supported locales
@@ -118,7 +105,7 @@ class LanguageSelector extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Language / اللغة', 
+        Text('Language', 
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
@@ -148,7 +135,6 @@ class LanguageDropdown extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentLocale = ref.watch(languageProvider);
-    final currentLang = getLanguageByCode(currentLocale.languageCode);
     
     return DropdownButton<String>(
       value: currentLocale.languageCode,

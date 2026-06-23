@@ -12,6 +12,7 @@ import '../../modules/audio_player/audio_player_screen.dart';
 import '../../modules/image_viewer/image_viewer_screen.dart';
 import '../../modules/video_player/video_player_screen.dart';
 import '../../services/recent_files.dart';
+import '../../l10n/app_localizations.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -19,42 +20,50 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final recentFiles = ref.watch(recentFilesProvider);
+    final scrollPhysics = Theme.of(context).platform == TargetPlatform.iOS
+        ? const BouncingScrollPhysics()
+        : const ClampingScrollPhysics();
 
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Welcome banner
-          _buildWelcomeBanner(context),
-          const SizedBox(height: 32),
+    return SingleChildScrollView(
+      physics: scrollPhysics,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Welcome banner
+            _buildWelcomeBanner(context),
+            const SizedBox(height: 32),
 
-          // Quick Actions
-          _buildSectionHeader(context, 'Quick Actions'),
-          const SizedBox(height: 16),
-          _buildQuickActions(context, ref),
-          const SizedBox(height: 32),
+            // Quick Actions
+            _buildSectionHeader(context, AppLocalizations.of(context)!.quickActions),
+            const SizedBox(height: 16),
+            _buildQuickActions(context, ref),
+            const SizedBox(height: 32),
 
-          // Recent Files
-          _buildSectionHeader(context, 'Recent Files',
-              trailing: recentFiles.isNotEmpty
-                  ? TextButton(
-                      onPressed: () =>
-                          ref.read(recentFilesProvider.notifier).clearAll(),
-                      child: const Text('Clear All',
-                          style: TextStyle(color: Colors.red)),
-                    )
-                  : null),
-          const SizedBox(height: 16),
-          Expanded(child: _buildRecentFiles(context, ref, recentFiles)),
-        ],
+            // Recent Files
+            _buildSectionHeader(context, AppLocalizations.of(context)!.recentFiles,
+                trailing: recentFiles.isNotEmpty
+                    ? TextButton(
+                        onPressed: () =>
+                            ref.read(recentFilesProvider.notifier).clearAll(),
+                        child: Text(AppLocalizations.of(context)!.clearAll,
+                            style: const TextStyle(color: Colors.red)),
+                      )
+                    : null),
+            const SizedBox(height: 16),
+            _buildRecentFiles(context, ref, recentFiles),
+          ],
+        ),
       ),
     );
   }
 
   // ── Welcome banner ────────────────────────────────────────────────────────────
-
+ 
   Widget _buildWelcomeBanner(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -72,60 +81,114 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          const Icon(Icons.shield, size: 48, color: Colors.white),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
+      child: isMobile
+          ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Welcome to Halal Player',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                Row(
+                  children: [
+                    const Icon(Icons.shield, size: 40, color: Colors.white),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        AppLocalizations.of(context)!.welcomeTitle,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 12),
                 Text(
-                  'Privacy-first media player with AI content protection',
+                  AppLocalizations.of(context)!.welcomeSubtitle,
                   style: Theme.of(context)
                       .textTheme
-                      .bodyMedium
+                      .bodySmall
                       ?.copyWith(color: Colors.white70),
                 ),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.check_circle, size: 14, color: Colors.green[100]),
+                        const SizedBox(width: 4),
+                        Text(
+                          AppLocalizations.of(context)!.protected,
+                          style: TextStyle(
+                              color: Colors.green[100],
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
-            ),
-          ),
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white24,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+            )
+          : Row(
               children: [
-                Icon(Icons.check_circle, size: 16, color: Colors.green[100]),
-                const SizedBox(width: 4),
-                Text(
-                  'Protected',
-                  style: TextStyle(
-                      color: Colors.green[100],
-                      fontWeight: FontWeight.w500),
+                const Icon(Icons.shield, size: 48, color: Colors.white),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppLocalizations.of(context)!.welcomeTitle,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        AppLocalizations.of(context)!.welcomeSubtitle,
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.check_circle, size: 16, color: Colors.green[100]),
+                      const SizedBox(width: 4),
+                      Text(
+                        AppLocalizations.of(context)!.protected,
+                        style: TextStyle(
+                            color: Colors.green[100],
+                            fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-        ],
-      ),
     );
   }
 
   // ── Section header ────────────────────────────────────────────────────────────
-
+ 
   Widget _buildSectionHeader(BuildContext context, String title,
       {Widget? trailing}) {
     return Row(
@@ -144,15 +207,58 @@ class HomeScreen extends ConsumerWidget {
   }
 
   // ── Quick Actions ─────────────────────────────────────────────────────────────
-
+ 
   Widget _buildQuickActions(BuildContext context, WidgetRef ref) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
+    if (isMobile) {
+      return GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.25,
+        children: [
+          _ActionCard(
+            icon: Icons.videocam,
+            title: AppLocalizations.of(context)!.openVideo,
+            subtitle: AppLocalizations.of(context)!.playWithProtection,
+            color: Colors.blue,
+            onTap: () => _pickAndOpen(context, ref, FileType.video),
+          ),
+          _ActionCard(
+            icon: Icons.audiotrack,
+            title: AppLocalizations.of(context)!.openAudio,
+            subtitle: AppLocalizations.of(context)!.listenSafely,
+            color: Colors.purple,
+            onTap: () => _pickAndOpen(context, ref, FileType.audio),
+          ),
+          _ActionCard(
+            icon: Icons.image,
+            title: AppLocalizations.of(context)!.viewImage,
+            subtitle: AppLocalizations.of(context)!.aiScanned,
+            color: Colors.teal,
+            onTap: () => _pickAndOpen(context, ref, FileType.image),
+          ),
+          _ActionCard(
+            icon: Icons.folder_open,
+            title: AppLocalizations.of(context)!.openFolder,
+            subtitle: AppLocalizations.of(context)!.browseLibrary,
+            color: Colors.orange,
+            onTap: () => _pickFolder(context, ref),
+          ),
+        ],
+      );
+    }
+
     return Row(
       children: [
         Expanded(
           child: _ActionCard(
             icon: Icons.videocam,
-            title: 'Open Video',
-            subtitle: 'Play with AI protection',
+            title: AppLocalizations.of(context)!.openVideo,
+            subtitle: AppLocalizations.of(context)!.playWithProtection,
             color: Colors.blue,
             onTap: () => _pickAndOpen(context, ref, FileType.video),
           ),
@@ -161,8 +267,8 @@ class HomeScreen extends ConsumerWidget {
         Expanded(
           child: _ActionCard(
             icon: Icons.audiotrack,
-            title: 'Open Audio',
-            subtitle: 'Listen safely',
+            title: AppLocalizations.of(context)!.openAudio,
+            subtitle: AppLocalizations.of(context)!.listenSafely,
             color: Colors.purple,
             onTap: () => _pickAndOpen(context, ref, FileType.audio),
           ),
@@ -171,8 +277,8 @@ class HomeScreen extends ConsumerWidget {
         Expanded(
           child: _ActionCard(
             icon: Icons.image,
-            title: 'View Image',
-            subtitle: 'AI-scanned before display',
+            title: AppLocalizations.of(context)!.viewImage,
+            subtitle: AppLocalizations.of(context)!.aiScanned,
             color: Colors.teal,
             onTap: () => _pickAndOpen(context, ref, FileType.image),
           ),
@@ -181,8 +287,8 @@ class HomeScreen extends ConsumerWidget {
         Expanded(
           child: _ActionCard(
             icon: Icons.folder_open,
-            title: 'Open Folder',
-            subtitle: 'Browse media library',
+            title: AppLocalizations.of(context)!.openFolder,
+            subtitle: AppLocalizations.of(context)!.browseLibrary,
             color: Colors.orange,
             onTap: () => _pickFolder(context, ref),
           ),
@@ -211,6 +317,8 @@ class HomeScreen extends ConsumerWidget {
             name,
             _typeToString(type),
           );
+
+      if (!context.mounted) return;
 
       // Navigate to the appropriate player
       _navigateToPlayer(context, path, _typeToString(type));
@@ -262,10 +370,11 @@ class HomeScreen extends ConsumerWidget {
       BuildContext context, WidgetRef ref, List<RecentFile> files) {
     if (files.isEmpty) {
       return Container(
+        height: 180,
         decoration: BoxDecoration(
-          color: const Color(0xFF2A2A2A),
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white12),
+          border: Border.all(color: Theme.of(context).dividerColor),
         ),
         child: Center(
           child: Column(
@@ -274,7 +383,7 @@ class HomeScreen extends ConsumerWidget {
               Icon(Icons.folder_open, size: 64, color: Colors.grey[700]),
               const SizedBox(height: 16),
               Text(
-                'No recent files',
+                AppLocalizations.of(context)!.noRecentFiles,
                 style: Theme.of(context)
                     .textTheme
                     .bodyLarge
@@ -282,7 +391,7 @@ class HomeScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Open a file to get started',
+                AppLocalizations.of(context)!.openFileToStart,
                 style: Theme.of(context)
                     .textTheme
                     .bodySmall
@@ -296,45 +405,23 @@ class HomeScreen extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
         itemCount: files.length,
-        separatorBuilder: (_, __) =>
-            const Divider(height: 1, color: Colors.white10),
+        separatorBuilder: (context, index) =>
+            Divider(height: 1, color: Theme.of(context).dividerColor),
         itemBuilder: (context, i) {
           final file = files[i];
-          return ListTile(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: _colorForType(file.type).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                _iconForType(file.type),
-                color: _colorForType(file.type),
-                size: 22,
-              ),
-            ),
-            title: Text(
-              file.name,
-              style: const TextStyle(fontWeight: FontWeight.w500),
-              overflow: TextOverflow.ellipsis,
-            ),
-            subtitle: Text(
-              file.path,
-              style: TextStyle(color: Colors.grey[500], fontSize: 11),
-              overflow: TextOverflow.ellipsis,
-            ),
-            trailing: Text(
-              _formatDate(file.openedAt),
-              style: TextStyle(color: Colors.grey[600], fontSize: 11),
-            ),
+          return _RecentFileItem(
+            file: file,
+            icon: _iconForType(file.type),
+            color: _colorForType(file.type),
+            formattedDate: _formatDate(context, file.openedAt),
             onTap: () {
               ref.read(recentFilesProvider.notifier).addFile(
                     file.path,
@@ -369,20 +456,21 @@ class HomeScreen extends ConsumerWidget {
     }
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(BuildContext context, DateTime date) {
     final now = DateTime.now();
     final diff = now.difference(date);
-    if (diff.inMinutes < 1) return 'just now';
-    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
-    if (diff.inDays < 1) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    final loc = AppLocalizations.of(context)!;
+    if (diff.inMinutes < 1) return loc.justNow;
+    if (diff.inHours < 1) return loc.minutesAgo(diff.inMinutes);
+    if (diff.inDays < 1) return loc.hoursAgo(diff.inHours);
+    if (diff.inDays < 7) return loc.daysAgo(diff.inDays);
     return '${date.day}/${date.month}/${date.year}';
   }
 }
 
 // ─── Action Card ──────────────────────────────────────────────────────────────
 
-class _ActionCard extends StatelessWidget {
+class _ActionCard extends StatefulWidget {
   const _ActionCard({
     required this.icon,
     required this.title,
@@ -398,48 +486,161 @@ class _ActionCard extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_ActionCard> createState() => _ActionCardState();
+}
+
+class _ActionCardState extends State<_ActionCard> {
+  bool _isPressed = false;
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Material(
-      color: color.withValues(alpha: 0.1),
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withValues(alpha: 0.3)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _isPressed = true),
+        onTapUp: (_) => setState(() => _isPressed = false),
+        onTapCancel: () => setState(() => _isPressed = false),
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          scale: _isPressed ? 0.96 : (_isHovered ? 1.03 : 1.0),
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOutCubic,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: widget.color.withValues(alpha: _isHovered ? 0.15 : 0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: widget.color.withValues(alpha: _isHovered ? 0.4 : 0.2),
+                width: 1.5,
+              ),
+              boxShadow: _isHovered
+                  ? [
+                      BoxShadow(
+                        color: widget.color.withValues(alpha: 0.1),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : [],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: widget.color.withValues(alpha: _isHovered ? 0.3 : 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(widget.icon, color: widget.color, size: 26),
                 ),
-                child: Icon(icon, color: color, size: 24),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: Colors.grey[500]),
-              ),
-            ],
+                const SizedBox(height: 16),
+                Text(
+                  widget.title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  widget.subtitle,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.grey[400]
+                            : Colors.grey[600],
+                        fontSize: 11,
+                      ),
+                ),
+              ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RecentFileItem extends StatefulWidget {
+  const _RecentFileItem({
+    required this.file,
+    required this.onTap,
+    required this.icon,
+    required this.color,
+    required this.formattedDate,
+  });
+
+  final RecentFile file;
+  final VoidCallback onTap;
+  final IconData icon;
+  final Color color;
+  final String formattedDate;
+
+  @override
+  State<_RecentFileItem> createState() => _RecentFileItemState();
+}
+
+class _RecentFileItemState extends State<_RecentFileItem> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        decoration: BoxDecoration(
+          color: _isHovered
+              ? widget.color.withValues(alpha: 0.05)
+              : Colors.transparent,
+        ),
+        child: ListTile(
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          leading: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: widget.color.withValues(alpha: _isHovered ? 0.25 : 0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              widget.icon,
+              color: widget.color,
+              size: 22,
+            ),
+          ),
+          title: Text(
+            widget.file.name,
+            style: TextStyle(
+              fontWeight: _isHovered ? FontWeight.bold : FontWeight.w500,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: Text(
+            widget.file.path,
+            style: TextStyle(color: Colors.grey[500], fontSize: 11),
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: Text(
+            widget.formattedDate,
+            style: TextStyle(
+              color: _isHovered ? widget.color : Colors.grey[600],
+              fontSize: 11,
+              fontWeight: _isHovered ? FontWeight.w500 : FontWeight.normal,
+            ),
+          ),
+          onTap: widget.onTap,
         ),
       ),
     );

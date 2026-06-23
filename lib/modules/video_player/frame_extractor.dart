@@ -53,7 +53,7 @@ class VideoFrameExtractor {
         if (await file.exists()) {
           final bytes = await file.readAsBytes();
           // Clean up temp file (fire-and-forget)
-          file.delete().catchError((_) {});
+          file.delete().catchError((_) => file);
           return bytes;
         }
       }

@@ -92,6 +92,12 @@ class AppThemes {
             borderRadius: BorderRadius.circular(16),
           ),
         ),
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: darkSurface,
+          selectedItemColor: primaryGreen,
+          unselectedItemColor: Colors.grey,
+          elevation: 8,
+        ),
       );
 
   /// Light theme
@@ -187,6 +193,12 @@ class AppThemes {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
+        ),
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+          backgroundColor: lightSurface,
+          selectedItemColor: primaryGreen,
+          unselectedItemColor: Colors.grey[600],
+          elevation: 8,
         ),
       );
 }

@@ -55,3 +55,6 @@ assets/models/*.bin
 
 # Sensitive
 *.env
+.env
+android/key.properties
+/assets/

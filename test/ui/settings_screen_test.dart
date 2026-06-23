@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:halal_player/core/config.dart';
 import 'package:halal_player/providers.dart';
 import 'package:halal_player/ui/settings/settings_screen.dart';
+import 'package:halal_player/l10n/app_localizations.dart';
+import 'package:halal_player/core/language_provider.dart';
 
 class FakeAppConfigNotifier extends AppConfigNotifier {
   FakeAppConfigNotifier(this.initialConfig);
@@ -17,12 +19,6 @@ class FakeAppConfigNotifier extends AppConfigNotifier {
     state = initialConfig;
     return initialConfig;
   }
-
-  @override
-  Future<void> _loadFromHive() async {}
-
-  @override
-  Future<void> _saveToHive() async {}
 }
 
 class FakeThemeModeNotifier extends ThemeModeNotifier {
@@ -31,12 +27,14 @@ class FakeThemeModeNotifier extends ThemeModeNotifier {
     state = ThemeMode.dark;
     return ThemeMode.dark;
   }
+}
 
+class FakeLanguageNotifier extends LanguageNotifier {
   @override
-  Future<void> _loadFromHive() async {}
-
-  @override
-  Future<void> _saveToHive(ThemeMode mode) async {}
+  Locale build() {
+    state = const Locale('en');
+    return const Locale('en');
+  }
 }
 
 void main() {
@@ -55,8 +53,11 @@ void main() {
         overrides: [
           appConfigProvider.overrideWith(() => FakeAppConfigNotifier(initialConfig)),
           themeModeProvider.overrideWith(() => FakeThemeModeNotifier()),
+          languageProvider.overrideWith(() => FakeLanguageNotifier()),
         ],
         child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: SettingsScreen(),
           ),
@@ -67,6 +68,7 @@ void main() {
     // Verify sections are displayed
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('Appearance'), findsOneWidget);
+    expect(find.text('Language'), findsOneWidget);
     expect(find.text('Filtering Mode'), findsOneWidget);
     expect(find.text('AI Behavior'), findsOneWidget);
   });

@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../modules/subtitles/subtitle_model.dart';
 import '../../modules/subtitles/subtitle_parser.dart';
 import '../../modules/translation/translation_service.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Translation engine selector
 enum TranslationEngine { argos, libre }
@@ -30,7 +31,6 @@ class TranslationScreen extends ConsumerStatefulWidget {
 class _TranslationScreenState extends ConsumerState<TranslationScreen> {
   // ── Engine ───────────────────────────────────────────────────────────────────
   TranslationEngine _engine = TranslationEngine.libre;
-  TranslationService? _service;
 
   // ── Language selection ───────────────────────────────────────────────────────
   String _sourceLang = 'auto';
@@ -200,22 +200,30 @@ class _TranslationScreenState extends ConsumerState<TranslationScreen> {
           _buildCard(
             title: 'Translation Engine',
             icon: Icons.memory,
-            child: Column(
-              children: [
-                _buildEngineOption(
-                  TranslationEngine.libre,
-                  title: 'LibreTranslate',
-                  subtitle: 'Self-hosted server at localhost:5000',
-                  available: _libreAvailable,
-                ),
-                const SizedBox(height: 8),
-                _buildEngineOption(
-                  TranslationEngine.argos,
-                  title: 'Argos Translate (Offline)',
-                  subtitle: 'pip install argostranslate langdetect',
-                  available: _argosAvailable,
-                ),
-              ],
+            child: RadioGroup<TranslationEngine>(
+              groupValue: _engine,
+              onChanged: (v) {
+                if (v != null) {
+                  setState(() => _engine = v);
+                }
+              },
+              child: Column(
+                children: [
+                  _buildEngineOption(
+                    TranslationEngine.libre,
+                    title: 'LibreTranslate',
+                    subtitle: 'Self-hosted server at localhost:5000',
+                    available: _libreAvailable,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildEngineOption(
+                    TranslationEngine.argos,
+                    title: 'Argos Translate (Offline)',
+                    subtitle: 'pip install argostranslate langdetect',
+                    available: _argosAvailable,
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -224,51 +232,55 @@ class _TranslationScreenState extends ConsumerState<TranslationScreen> {
           _buildCard(
             title: 'Languages',
             icon: Icons.language,
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildLangDropdown(
-                    label: 'Source Language',
-                    value: _sourceLang,
-                    options: const {
-                      'auto': 'Auto-detect',
-                      'en': 'English',
-                      'ar': 'العربية',
-                      'fr': 'Français',
-                      'de': 'Deutsch',
-                      'es': 'Español',
-                      'tr': 'Türkçe',
-                      'ru': 'Русский',
-                      'zh': '中文',
-                    },
-                    onChanged: (v) => setState(() => _sourceLang = v!),
-                  ),
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Icon(Icons.arrow_forward, color: Colors.green),
-                ),
-                Expanded(
-                  child: _buildLangDropdown(
-                    label: 'Target Language',
-                    value: _targetLang,
-                    options: const {
-                      'ar': 'العربية',
-                      'en': 'English',
-                      'fr': 'Français',
-                      'de': 'Deutsch',
-                      'es': 'Español',
-                      'tr': 'Türkçe',
-                      'ru': 'Русский',
-                      'zh': '中文',
-                      'ur': 'اردو',
-                      'fa': 'فارسی',
-                      'id': 'Bahasa Indonesia',
-                    },
-                    onChanged: (v) => setState(() => _targetLang = v!),
-                  ),
-                ),
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isMobile = MediaQuery.of(context).size.width < 600;
+
+                final sourcePicker = _buildLangDropdown(
+                  label: 'Source Language',
+                  value: _sourceLang,
+                  options: const {
+                    'auto': 'Auto-detect',
+                    'en': 'English',
+                    'ar': 'العربية',
+                  },
+                  onChanged: (v) => setState(() => _sourceLang = v!),
+                );
+
+                final targetPicker = _buildLangDropdown(
+                  label: 'Target Language',
+                  value: _targetLang,
+                  options: const {
+                    'ar': 'العربية',
+                    'en': 'English',
+                  },
+                  onChanged: (v) => setState(() => _targetLang = v!),
+                );
+
+                if (isMobile) {
+                  return Column(
+                    children: [
+                      sourcePicker,
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Icon(Icons.arrow_downward, color: Colors.green),
+                      ),
+                      targetPicker,
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(child: sourcePicker),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Icon(Icons.arrow_forward, color: Colors.green),
+                    ),
+                    Expanded(child: targetPicker),
+                  ],
+                );
+              },
             ),
           ),
           const SizedBox(height: 16),
@@ -300,7 +312,7 @@ class _TranslationScreenState extends ConsumerState<TranslationScreen> {
                     FilledButton.icon(
                       onPressed: _pickInputFile,
                       icon: const Icon(Icons.folder_open, size: 18),
-                      label: const Text('Browse'),
+                      label: Text(AppLocalizations.of(context)!.browse),
                       style: FilledButton.styleFrom(
                           backgroundColor: Colors.green),
                     ),
@@ -346,7 +358,7 @@ class _TranslationScreenState extends ConsumerState<TranslationScreen> {
                   : const Icon(Icons.translate),
               label: Text(
                 _isTranslating
-                    ? 'Translating... $_progressCurrent / $_progressTotal'
+                     ? 'Translating... $_progressCurrent / $_progressTotal'
                     : 'Translate Subtitle File',
                 style: const TextStyle(fontSize: 16),
               ),
@@ -418,16 +430,16 @@ class _TranslationScreenState extends ConsumerState<TranslationScreen> {
             Container(
               height: 300,
               decoration: BoxDecoration(
-                color: const Color(0xFF2A2A2A),
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white12),
+                border: Border.all(color: Theme.of(context).dividerColor),
               ),
               child: ListView.separated(
                 padding: const EdgeInsets.all(12),
                 itemCount: _translatedTrack!.entries.length
                     .clamp(0, 50), // Preview first 50
-                separatorBuilder: (_, __) =>
-                    const Divider(height: 1, color: Colors.white10),
+                separatorBuilder: (context, index) =>
+                    Divider(height: 1, color: Theme.of(context).dividerColor),
                 itemBuilder: (_, i) {
                   final entry = _translatedTrack!.entries[i];
                   return Padding(
@@ -482,9 +494,9 @@ class _TranslationScreenState extends ConsumerState<TranslationScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -505,7 +517,7 @@ class _TranslationScreenState extends ConsumerState<TranslationScreen> {
               ],
             ),
           ),
-          const Divider(height: 1, color: Color(0xFF3A3A3A)),
+          Divider(height: 1, color: Theme.of(context).dividerColor),
           Padding(padding: const EdgeInsets.all(16), child: child),
         ],
       ),
@@ -519,6 +531,8 @@ class _TranslationScreenState extends ConsumerState<TranslationScreen> {
     required bool available,
   }) {
     final isSelected = _engine == engine;
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
     return InkWell(
       onTap: () => setState(() => _engine = engine),
       borderRadius: BorderRadius.circular(8),
@@ -531,47 +545,95 @@ class _TranslationScreenState extends ConsumerState<TranslationScreen> {
             width: isSelected ? 2 : 1,
           ),
         ),
-        child: Row(
-          children: [
-            Radio<TranslationEngine>(
-              value: engine,
-              groupValue: _engine,
-              onChanged: (v) => setState(() => _engine = v!),
-              activeColor: Colors.green,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
+        child: isMobile
+            ? Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  Text(
-                    subtitle,
-                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                  Row(
+                    children: [
+                      Radio<TranslationEngine>(
+                        value: engine,
+                        activeColor: Colors.green,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 40),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          subtitle,
+                          style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: available
+                                ? Colors.green.withValues(alpha: 0.2)
+                                : Colors.red.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            available ? '● Available' : '○ Unavailable',
+                            style: TextStyle(
+                              color: available ? Colors.green : Colors.red,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              )
+            : Row(
+                children: [
+                  Radio<TranslationEngine>(
+                    value: engine,
+                    activeColor: Colors.green,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        Text(
+                          subtitle,
+                          style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: available
+                          ? Colors.green.withValues(alpha: 0.2)
+                          : Colors.red.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      available ? '● Available' : '○ Unavailable',
+                      style: TextStyle(
+                        color: available ? Colors.green : Colors.red,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ],
               ),
-            ),
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: available
-                    ? Colors.green.withValues(alpha: 0.2)
-                    : Colors.red.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                available ? '● Available' : '○ Unavailable',
-                style: TextStyle(
-                  color: available ? Colors.green : Colors.red,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -594,15 +656,15 @@ class _TranslationScreenState extends ConsumerState<TranslationScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: const Color(0xFF1A1A1A),
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white12),
+            border: Border.all(color: Theme.of(context).dividerColor),
           ),
           child: DropdownButton<String>(
             value: value,
             isExpanded: true,
             underline: const SizedBox(),
-            dropdownColor: const Color(0xFF2A2A2A),
+            dropdownColor: Theme.of(context).cardColor,
             items: options.entries
                 .map((e) => DropdownMenuItem(
                       value: e.key,

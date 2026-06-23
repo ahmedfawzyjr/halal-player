@@ -3,6 +3,7 @@
 // Application information and credits
 
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -12,9 +13,10 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('About Halal Player'),
+        title: Text(l10n.aboutHalalPlayer),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -32,7 +34,7 @@ class AboutScreen extends StatelessWidget {
                 'assets/img/logo-icon.png',
                 width: 80,
                 height: 80,
-                errorBuilder: (_, __, ___) => Icon(
+                errorBuilder: (context, error, stackTrace) => Icon(
                   Icons.play_circle,
                   size: 80,
                   color: Theme.of(context).primaryColor,
@@ -52,7 +54,7 @@ class AboutScreen extends StatelessWidget {
             
             // Version
             Text(
-              'Version $version (Build $buildNumber)',
+              '${l10n.version} $version (Build $buildNumber)',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Colors.grey,
               ),
@@ -72,17 +74,13 @@ class AboutScreen extends StatelessWidget {
                           color: Theme.of(context).primaryColor),
                         const SizedBox(width: 8),
                         Text(
-                          'About',
+                          l10n.about,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'Halal Player is a privacy-first media player with AI-powered '
-                      'content filtering for Islamic compliance. All processing happens '
-                      'locally on your device - your media never leaves your computer.',
-                    ),
+                    Text(l10n.aboutDesc),
                   ],
                 ),
               ),
@@ -102,19 +100,19 @@ class AboutScreen extends StatelessWidget {
                           color: Theme.of(context).primaryColor),
                         const SizedBox(width: 8),
                         Text(
-                          'Features',
+                          l10n.features,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    _buildFeatureRow(Icons.shield, 'AI Content Filtering'),
-                    _buildFeatureRow(Icons.videocam, 'Video Player'),
-                    _buildFeatureRow(Icons.audiotrack, 'Audio Player'),
-                    _buildFeatureRow(Icons.image, 'Image Viewer'),
-                    _buildFeatureRow(Icons.subtitles, 'Auto Subtitles'),
-                    _buildFeatureRow(Icons.language, '15 Languages'),
-                    _buildFeatureRow(Icons.wifi_off, '100% Offline'),
+                    _buildFeatureRow(Icons.shield, l10n.aiContentFiltering),
+                    _buildFeatureRow(Icons.videocam, l10n.videoPlayer),
+                    _buildFeatureRow(Icons.audiotrack, l10n.audioPlayer),
+                    _buildFeatureRow(Icons.image, l10n.imageViewer),
+                    _buildFeatureRow(Icons.subtitles, l10n.autoSubtitles),
+                    _buildFeatureRow(Icons.language, l10n.fifteenLanguages),
+                    _buildFeatureRow(Icons.wifi_off, l10n.oneHundredPercentOffline),
                   ],
                 ),
               ),
@@ -134,18 +132,18 @@ class AboutScreen extends StatelessWidget {
                           color: Theme.of(context).primaryColor),
                         const SizedBox(width: 8),
                         Text(
-                          'Developer',
+                          l10n.developerRole,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    const ListTile(
-                      leading: CircleAvatar(
+                    ListTile(
+                      leading: const CircleAvatar(
                         child: Icon(Icons.person),
                       ),
-                      title: Text('Ahmed Fawzy'),
-                      subtitle: Text('Developer'),
+                      title: const Text('Ahmed Fawzy'),
+                      subtitle: Text(l10n.developerRole),
                       contentPadding: EdgeInsets.zero,
                     ),
                   ],
@@ -160,7 +158,7 @@ class AboutScreen extends StatelessWidget {
                 children: [
                   ListTile(
                     leading: const Icon(Icons.code),
-                    title: const Text('GitHub Repository'),
+                    title: Text(l10n.githubRepository),
                     subtitle: const Text('github.com/ahmedfawzyjr/Halal-Player'),
                     trailing: const Icon(Icons.open_in_new),
                     onTap: () {
@@ -170,7 +168,7 @@ class AboutScreen extends StatelessWidget {
                   const Divider(height: 1),
                   ListTile(
                     leading: const Icon(Icons.bug_report),
-                    title: const Text('Report Issue'),
+                    title: Text(l10n.reportIssue),
                     trailing: const Icon(Icons.open_in_new),
                     onTap: () {
                       // Open issues page
@@ -183,14 +181,14 @@ class AboutScreen extends StatelessWidget {
             
             // Copyright
             Text(
-              '© 2025 Ahmed Fawzy. All rights reserved.',
+              l10n.allRightsReserved,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Colors.grey,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Made with ❤️ for the Muslim community',
+              l10n.madeWithLove,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Colors.grey,
               ),

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers.dart';
+import '../../l10n/app_localizations.dart';
 
 class LogsScreen extends ConsumerWidget {
   const LogsScreen({super.key});
@@ -22,36 +23,50 @@ class LogsScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Content Logs',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobile = MediaQuery.of(context).size.width < 600;
+              final headerContent = [
+                Text(
+                  AppLocalizations.of(context)!.contentLogs,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                if (isMobile) const SizedBox(height: 12),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () {},
+                      icon: const Icon(Icons.filter_list, size: 18),
+                      label: Text(AppLocalizations.of(context)!.filter),
                     ),
-              ),
-              Row(
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.filter_list, size: 18),
-                    label: const Text('Filter'),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton.icon(
-                    onPressed: logs.isEmpty
-                        ? null
-                        : () => _showClearConfirmation(context, ref),
-                    icon: const Icon(Icons.delete, size: 18),
-                    label: const Text('Clear All'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.red,
+                    const SizedBox(width: 8),
+                    FilledButton.icon(
+                      onPressed: logs.isEmpty
+                          ? null
+                          : () => _showClearConfirmation(context, ref),
+                      icon: const Icon(Icons.delete, size: 18),
+                      label: Text(AppLocalizations.of(context)!.clearAll),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.red,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ];
+
+              return isMobile
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: headerContent,
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: headerContent,
+                    );
+            },
           ),
           const SizedBox(height: 24),
 
@@ -73,12 +88,14 @@ class LogsScreen extends ConsumerWidget {
               children: [
                 Icon(Icons.shield, color: Colors.green[300], size: 16),
                 const SizedBox(width: 12),
-                Text(
-                  'Logs are stored in memory only and never leave your device.',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: Colors.green[300]),
+                Expanded(
+                  child: Text(
+                    AppLocalizations.of(context)!.logsStoredLocally,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: Colors.green[300]),
+                  ),
                 ),
               ],
             ),
@@ -99,11 +116,50 @@ class LogsScreen extends ConsumerWidget {
 
   Widget _buildStatsRow(
       BuildContext context, ContentLogsNotifier notifier) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
+    if (isMobile) {
+      return GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.6,
+        children: [
+          _StatCard(
+            title: AppLocalizations.of(context)!.totalAnalyzed,
+            value: '${notifier.totalAnalyzed}',
+            icon: Icons.analytics,
+            color: Colors.blue,
+          ),
+          _StatCard(
+            title: AppLocalizations.of(context)!.allowed,
+            value: '${notifier.totalAllowed}',
+            icon: Icons.check_circle,
+            color: Colors.green,
+          ),
+          _StatCard(
+            title: AppLocalizations.of(context)!.blurred,
+            value: '${notifier.totalBlurred}',
+            icon: Icons.blur_on,
+            color: Colors.orange,
+          ),
+          _StatCard(
+            title: AppLocalizations.of(context)!.blocked,
+            value: '${notifier.totalBlocked}',
+            icon: Icons.block,
+            color: Colors.red,
+          ),
+        ],
+      );
+    }
+
     return Row(
       children: [
         Expanded(
           child: _StatCard(
-            title: 'Analyzed',
+            title: AppLocalizations.of(context)!.totalAnalyzed,
             value: '${notifier.totalAnalyzed}',
             icon: Icons.analytics,
             color: Colors.blue,
@@ -112,7 +168,7 @@ class LogsScreen extends ConsumerWidget {
         const SizedBox(width: 16),
         Expanded(
           child: _StatCard(
-            title: 'Allowed',
+            title: AppLocalizations.of(context)!.allowed,
             value: '${notifier.totalAllowed}',
             icon: Icons.check_circle,
             color: Colors.green,
@@ -121,7 +177,7 @@ class LogsScreen extends ConsumerWidget {
         const SizedBox(width: 16),
         Expanded(
           child: _StatCard(
-            title: 'Blurred',
+            title: AppLocalizations.of(context)!.blurred,
             value: '${notifier.totalBlurred}',
             icon: Icons.blur_on,
             color: Colors.orange,
@@ -130,7 +186,7 @@ class LogsScreen extends ConsumerWidget {
         const SizedBox(width: 16),
         Expanded(
           child: _StatCard(
-            title: 'Blocked',
+            title: AppLocalizations.of(context)!.blocked,
             value: '${notifier.totalBlocked}',
             icon: Icons.block,
             color: Colors.red,
@@ -145,9 +201,9 @@ class LogsScreen extends ConsumerWidget {
   Widget _buildEmpty(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Center(
         child: Column(
@@ -156,7 +212,7 @@ class LogsScreen extends ConsumerWidget {
             Icon(Icons.article_outlined, size: 64, color: Colors.grey[700]),
             const SizedBox(height: 16),
             Text(
-              'No logs yet',
+              AppLocalizations.of(context)!.noLogsYet,
               style: Theme.of(context)
                   .textTheme
                   .titleMedium
@@ -164,7 +220,7 @@ class LogsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Content analysis logs will appear here as you open media',
+              AppLocalizations.of(context)!.logsAppearHere,
               textAlign: TextAlign.center,
               style: Theme.of(context)
                   .textTheme
@@ -182,14 +238,14 @@ class LogsScreen extends ConsumerWidget {
   Widget _buildList(BuildContext context, List<ContentLogEntry> logs) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: ListView.separated(
         itemCount: logs.length,
-        separatorBuilder: (_, __) =>
-            const Divider(height: 1, color: Colors.white10),
+        separatorBuilder: (context, index) =>
+            Divider(height: 1, color: Theme.of(context).dividerColor),
         itemBuilder: (context, i) => _LogItem(entry: logs[i]),
       ),
     );
@@ -201,26 +257,26 @@ class LogsScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Clear All Logs?'),
-        content: const Text(
-          'This will permanently delete all content logs from memory.',
+        title: Text(AppLocalizations.of(context)!.clearAllLogs),
+        content: Text(
+          AppLocalizations.of(context)!.clearLogsWarning,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () {
               Navigator.pop(dialogContext);
               ref.read(contentLogsProvider.notifier).clearLogs();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Row(
                     children: [
-                      Icon(Icons.check_circle, color: Colors.white),
-                      SizedBox(width: 8),
-                      Text('All logs cleared'),
+                      const Icon(Icons.check_circle, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Text(AppLocalizations.of(context)!.logsCleared),
                     ],
                   ),
                   backgroundColor: Colors.green,
@@ -228,7 +284,7 @@ class LogsScreen extends ConsumerWidget {
               );
             },
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Clear All'),
+            child: Text(AppLocalizations.of(context)!.clearAll),
           ),
         ],
       ),

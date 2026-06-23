@@ -140,5 +140,53 @@
   "contentBlocked": "Content Blocked",
   "blockedByFilters": "This content has been blocked by AI safety filters",
   "confidence": "Confidence",
-  "privacyProtected": "Your privacy is protected - this was analyzed locally"
+  "privacyProtected": "Your privacy is protected - this was analyzed locally",
+  "aboutHalalPlayer": "About Halal Player",
+  "developerRole": "Developer",
+  "githubRepository": "GitHub Repository",
+  "reportIssue": "Report Issue",
+  "madeWithLove": "Made with ❤️ for the Muslim community",
+  "allRightsReserved": "© 2025 Ahmed Fawzy. All rights reserved.",
+  "aboutDesc": "Halal Player is a privacy-first media player with AI-powered content filtering for Islamic compliance. All processing happens locally on your device - your media never leaves your computer.",
+  "features": "Features",
+  "aiContentFiltering": "AI Content Filtering",
+  "fifteenLanguages": "15 Languages",
+  "oneHundredPercentOffline": "100% Offline",
+  "autoSubtitles": "Auto Subtitles",
+  "viewAllShortcuts": "View All Shortcuts",
+  "browse": "Browse",
+  "track": "Track",
+  "off": "Off",
+  "noImageSelected": "No image selected",
+  "openImage": "Open Image",
+  "tryAnother": "Try Another",
+  "downloadSubtitlesDesc": "Download subtitles from OpenSubtitles",
+  "preferredSubtitleLanguage": "Preferred Subtitle Language",
+  "filterInappropriateWords": "Filter inappropriate words in subtitles",
+  "keyboardShortcuts": "Keyboard Shortcuts",
+  "justNow": "just now",
+  "minutesAgo": "{count}m ago",
+  "@minutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursAgo": "{count}h ago",
+  "@hoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "daysAgo": "{count}d ago",
+  "@daysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

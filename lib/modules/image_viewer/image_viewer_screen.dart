@@ -17,6 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ai/image_analyzer.dart';
 import '../../ai/ui/blur_block_widgets.dart';
 import '../../providers.dart';
+import '../../l10n/app_localizations.dart';
 
 class ImageViewerScreen extends ConsumerStatefulWidget {
   const ImageViewerScreen({super.key, this.imagePath});
@@ -111,19 +112,19 @@ class _ImageViewerScreenState extends ConsumerState<ImageViewerScreen> {
     // ── No file selected ──────────────────────────────────────────────────────
     if (_path == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Image Viewer')),
+        appBar: AppBar(title: Text(AppLocalizations.of(context)!.imageViewer)),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.image, size: 64, color: Colors.grey),
               const SizedBox(height: 16),
-              const Text('No image selected'),
+              Text(AppLocalizations.of(context)!.noImageSelected),
               const SizedBox(height: 16),
               FilledButton.icon(
                 onPressed: _pickImage,
                 icon: const Icon(Icons.folder_open),
-                label: const Text('Open Image'),
+                label: Text(AppLocalizations.of(context)!.openImage),
               ),
             ],
           ),
@@ -155,7 +156,7 @@ class _ImageViewerScreenState extends ConsumerState<ImageViewerScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         title: Text(
           _path!.split(r'\').last.split('/').last,
           overflow: TextOverflow.ellipsis,
@@ -184,7 +185,7 @@ class _ImageViewerScreenState extends ConsumerState<ImageViewerScreen> {
               child: Image.file(
                 File(_path!),
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Center(
+                errorBuilder: (context, error, stackTrace) => const Center(
                   child: Icon(Icons.broken_image,
                       size: 64, color: Colors.grey),
                 ),
@@ -213,15 +214,15 @@ class _ImageViewerScreenState extends ConsumerState<ImageViewerScreen> {
 
   Widget _buildScanningScreen() {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: Container(
           padding: const EdgeInsets.all(40),
           margin: const EdgeInsets.all(32),
           decoration: BoxDecoration(
-            color: const Color(0xFF2A2A2A),
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+            border: Border.all(color: Theme.of(context).dividerColor),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -285,7 +286,7 @@ class _ImageViewerScreenState extends ConsumerState<ImageViewerScreen> {
                 _path = null;
                 _error = null;
               }),
-              child: const Text('Try Another'),
+              child: Text(AppLocalizations.of(context)!.tryAnother),
             ),
           ],
         ),

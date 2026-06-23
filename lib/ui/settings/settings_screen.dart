@@ -8,7 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config.dart';
 import '../../core/keyboard_shortcuts.dart';
+import '../../core/language_provider.dart';
 import '../../providers.dart';
+import '../../l10n/app_localizations.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -18,14 +20,19 @@ class SettingsScreen extends ConsumerWidget {
     // Watch live state from providers
     final config = ref.watch(appConfigProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final loc = AppLocalizations.of(context)!;
+    final scrollPhysics = Theme.of(context).platform == TargetPlatform.iOS
+        ? const BouncingScrollPhysics()
+        : const ClampingScrollPhysics();
 
     return SingleChildScrollView(
+      physics: scrollPhysics,
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Settings',
+            loc.settings,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -35,16 +42,25 @@ class SettingsScreen extends ConsumerWidget {
           // ── Appearance ────────────────────────────────────────────────────
           _buildSection(
             context,
-            title: 'Appearance',
+            title: loc.appearance,
             icon: Icons.palette,
             child: _buildAppearanceSettings(context, ref, themeMode),
+          ),
+          const SizedBox(height: 16),
+
+          // ── Language ──────────────────────────────────────────────────────
+          _buildSection(
+            context,
+            title: loc.language,
+            icon: Icons.language,
+            child: _buildLanguageSettings(context, ref),
           ),
           const SizedBox(height: 16),
 
           // ── Filtering Mode ────────────────────────────────────────────────
           _buildSection(
             context,
-            title: 'Filtering Mode',
+            title: loc.filteringMode,
             icon: Icons.shield,
             child: _buildFilterModeSelector(context, ref, config),
           ),
@@ -53,7 +69,7 @@ class SettingsScreen extends ConsumerWidget {
           // ── AI Behavior ───────────────────────────────────────────────────
           _buildSection(
             context,
-            title: 'AI Behavior',
+            title: loc.aiBehavior,
             icon: Icons.memory,
             child: _buildAIBehaviorSettings(context, ref, config),
           ),
@@ -62,7 +78,7 @@ class SettingsScreen extends ConsumerWidget {
           // ── Privacy ───────────────────────────────────────────────────────
           _buildSection(
             context,
-            title: 'Privacy',
+            title: loc.privacy,
             icon: Icons.lock,
             child: _buildPrivacySettings(context, ref, config),
           ),
@@ -71,7 +87,7 @@ class SettingsScreen extends ConsumerWidget {
           // ── Keyboard Shortcuts ────────────────────────────────────────────
           _buildSection(
             context,
-            title: 'Keyboard Shortcuts',
+            title: loc.keyboardShortcuts,
             icon: Icons.keyboard,
             child: _buildKeyboardShortcutsSection(context),
           ),
@@ -80,7 +96,7 @@ class SettingsScreen extends ConsumerWidget {
           // ── About ─────────────────────────────────────────────────────────
           _buildSection(
             context,
-            title: 'About',
+            title: loc.about,
             icon: Icons.info,
             child: _buildAboutSection(context),
           ),
@@ -89,55 +105,147 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
+  // ── Language ────────────────────────────────────────────────────────────────
+
+  Widget _buildLanguageSettings(BuildContext context, WidgetRef ref) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    final loc = AppLocalizations.of(context)!;
+    final currentLocale = ref.watch(languageProvider);
+
+    final langInfo = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(loc.selectLanguage, style: Theme.of(context).textTheme.bodyLarge),
+        const SizedBox(height: 4),
+        Text(
+          getLanguageByCode(currentLocale.languageCode)?.nativeName ?? '',
+          style: Theme.of(context)
+              .textTheme
+              .bodySmall
+              ?.copyWith(color: Colors.grey[500]),
+        ),
+      ],
+    );
+
+    final dropdown = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: currentLocale.languageCode,
+          dropdownColor: Theme.of(context).cardColor,
+          items: supportedLanguages.map((lang) {
+            return DropdownMenuItem(
+              value: lang.code,
+              child: Text(
+                '${lang.nativeName} (${lang.name})',
+                style: const TextStyle(fontSize: 13),
+              ),
+            );
+          }).toList(),
+          onChanged: (code) {
+            if (code != null) {
+              ref.read(languageProvider.notifier).setLanguage(code);
+            }
+          },
+        ),
+      ),
+    );
+
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          langInfo,
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: dropdown,
+          ),
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(child: langInfo),
+        dropdown,
+      ],
+    );
+  }
+
   // ── Appearance ──────────────────────────────────────────────────────────────
 
   Widget _buildAppearanceSettings(
       BuildContext context, WidgetRef ref, ThemeMode themeMode) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    final loc = AppLocalizations.of(context)!;
+
+    final themeInfo = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(loc.theme, style: Theme.of(context).textTheme.bodyLarge),
+        const SizedBox(height: 4),
+        Text(
+          themeMode == ThemeMode.dark
+              ? loc.darkMode
+              : themeMode == ThemeMode.light
+                  ? loc.lightMode
+                  : loc.auto,
+          style: Theme.of(context)
+              .textTheme
+              .bodySmall
+              ?.copyWith(color: Colors.grey[500]),
+        ),
+      ],
+    );
+
+    final segmentedButton = SegmentedButton<ThemeMode>(
+      segments: [
+        ButtonSegment(
+          value: ThemeMode.light,
+          icon: const Icon(Icons.light_mode, size: 16),
+          label: Text(loc.light, style: const TextStyle(fontSize: 12)),
+        ),
+        ButtonSegment(
+          value: ThemeMode.dark,
+          icon: const Icon(Icons.dark_mode, size: 16),
+          label: Text(loc.dark, style: const TextStyle(fontSize: 12)),
+        ),
+        ButtonSegment(
+          value: ThemeMode.system,
+          icon: const Icon(Icons.brightness_auto, size: 16),
+          label: Text(loc.auto, style: const TextStyle(fontSize: 12)),
+        ),
+      ],
+      selected: {themeMode},
+      onSelectionChanged: (Set<ThemeMode> selected) {
+        ref.read(themeModeProvider.notifier).setThemeMode(selected.first);
+      },
+    );
+
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          themeInfo,
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: segmentedButton,
+          ),
+        ],
+      );
+    }
+
     return Row(
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Theme', style: Theme.of(context).textTheme.bodyLarge),
-              const SizedBox(height: 4),
-              Text(
-                themeMode == ThemeMode.dark
-                    ? 'Dark mode'
-                    : themeMode == ThemeMode.light
-                        ? 'Light mode'
-                        : 'System default',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: Colors.grey[500]),
-              ),
-            ],
-          ),
-        ),
-        SegmentedButton<ThemeMode>(
-          segments: const [
-            ButtonSegment(
-              value: ThemeMode.light,
-              icon: Icon(Icons.light_mode, size: 18),
-              label: Text('Light'),
-            ),
-            ButtonSegment(
-              value: ThemeMode.dark,
-              icon: Icon(Icons.dark_mode, size: 18),
-              label: Text('Dark'),
-            ),
-            ButtonSegment(
-              value: ThemeMode.system,
-              icon: Icon(Icons.brightness_auto, size: 18),
-              label: Text('Auto'),
-            ),
-          ],
-          selected: {themeMode},
-          onSelectionChanged: (Set<ThemeMode> selected) {
-            ref.read(themeModeProvider.notifier).setThemeMode(selected.first);
-          },
-        ),
+        Expanded(child: themeInfo),
+        segmentedButton,
       ],
     );
   }
@@ -146,19 +254,32 @@ class SettingsScreen extends ConsumerWidget {
 
   Widget _buildFilterModeSelector(
       BuildContext context, WidgetRef ref, AppConfig config) {
+    final loc = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Select your preferred filtering level',
+          loc.selectFilteringLevel,
           style: Theme.of(context)
               .textTheme
               .bodySmall
               ?.copyWith(color: Colors.grey[500]),
         ),
         const SizedBox(height: 16),
-        ...FilterMode.values
-            .map((mode) => _buildModeOption(context, ref, mode, config)),
+        RadioGroup<FilterMode>(
+          groupValue: config.mode,
+          onChanged: (value) {
+            if (value != null) {
+              ref.read(appConfigProvider.notifier).setMode(value);
+            }
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: FilterMode.values
+                .map((mode) => _buildModeOption(context, ref, mode, config))
+                .toList(),
+          ),
+        ),
       ],
     );
   }
@@ -167,6 +288,33 @@ class SettingsScreen extends ConsumerWidget {
       BuildContext context, WidgetRef ref, FilterMode mode, AppConfig config) {
     final isSelected = config.mode == mode;
     final thresholdColor = _getThresholdColor(mode.nsfwThreshold);
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    final loc = AppLocalizations.of(context)!;
+
+    String label = '';
+    String description = '';
+    switch (mode) {
+      case FilterMode.strictIslamic:
+        label = loc.strictIslamic;
+        description = loc.strictIslamicDesc;
+        break;
+      case FilterMode.family:
+        label = loc.family;
+        description = loc.familyDesc;
+        break;
+      case FilterMode.teen:
+        label = loc.teen;
+        description = loc.teenDesc;
+        break;
+      case FilterMode.educational:
+        label = loc.educational;
+        description = loc.educationalDesc;
+        break;
+      case FilterMode.developer:
+        label = loc.developer;
+        description = loc.developerDesc;
+        break;
+    }
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -188,58 +336,101 @@ class SettingsScreen extends ConsumerWidget {
                 width: isSelected ? 2 : 1,
               ),
             ),
-            child: Row(
-              children: [
-                Radio<FilterMode>(
-                  value: mode,
-                  groupValue: config.mode,
-                  onChanged: (value) {
-                    if (value != null) {
-                      ref.read(appConfigProvider.notifier).setMode(value);
-                    }
-                  },
-                  activeColor: Colors.green,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
+            child: isMobile
+                ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        mode.label,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
+                      Row(
+                        children: [
+                          Radio<FilterMode>(
+                            value: mode,
+                            activeColor: Colors.green,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              label,
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
                             ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: thresholdColor.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '${loc.threshold}: ${(mode.nsfwThreshold * 100).toInt()}%',
+                              style: TextStyle(
+                                color: thresholdColor,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        mode.description,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: Colors.grey[500]),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 48),
+                        child: Text(
+                          description,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: Colors.grey[500]),
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Radio<FilterMode>(
+                        value: mode,
+                        activeColor: Colors.green,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              label,
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              description,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(color: Colors.grey[500]),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: thresholdColor.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${loc.threshold}: ${(mode.nsfwThreshold * 100).toInt()}%',
+                          style: TextStyle(
+                            color: thresholdColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: thresholdColor.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    'Threshold: ${(mode.nsfwThreshold * 100).toInt()}%',
-                    style: TextStyle(
-                      color: thresholdColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
       ),
@@ -257,12 +448,13 @@ class SettingsScreen extends ConsumerWidget {
 
   Widget _buildAIBehaviorSettings(
       BuildContext context, WidgetRef ref, AppConfig config) {
+    final loc = AppLocalizations.of(context)!;
     return Column(
       children: [
         _buildToggleSetting(
           context,
-          title: 'Blur Effect',
-          subtitle: 'Use blur instead of blocking content',
+          title: loc.blurEffect,
+          subtitle: loc.blurEffectDesc,
           value: config.enableBlurEffect,
           onChanged: (value) =>
               ref.read(appConfigProvider.notifier).setEnableBlurEffect(value),
@@ -270,8 +462,8 @@ class SettingsScreen extends ConsumerWidget {
         const SizedBox(height: 12),
         _buildToggleSetting(
           context,
-          title: 'Auto Skip Flagged',
-          subtitle: 'Automatically skip detected content',
+          title: loc.autoSkipFlagged,
+          subtitle: loc.autoSkipFlaggedDesc,
           value: config.autoSkipFlagged,
           onChanged: (value) =>
               ref.read(appConfigProvider.notifier).setAutoSkipFlagged(value),
@@ -279,8 +471,8 @@ class SettingsScreen extends ConsumerWidget {
         const SizedBox(height: 12),
         _buildToggleSetting(
           context,
-          title: 'AI Explanations',
-          subtitle: 'Show why content was blocked',
+          title: loc.aiExplanations,
+          subtitle: loc.aiExplanationsDesc,
           value: config.showExplanations,
           onChanged: (value) =>
               ref.read(appConfigProvider.notifier).setShowExplanations(value),
@@ -297,7 +489,7 @@ class SettingsScreen extends ConsumerWidget {
                     style: Theme.of(context).textTheme.bodyLarge),
                 Text(
                   '${config.frameAnalysisInterval}ms',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.green,
                     fontWeight: FontWeight.bold,
                   ),
@@ -312,16 +504,19 @@ class SettingsScreen extends ConsumerWidget {
                   .bodySmall
                   ?.copyWith(color: Colors.grey[500]),
             ),
-            Slider(
-              value: config.frameAnalysisInterval.toDouble(),
-              min: 500,
-              max: 5000,
-              divisions: 9,
-              activeColor: Colors.green,
-              label: '${config.frameAnalysisInterval}ms',
-              onChanged: (value) => ref
-                  .read(appConfigProvider.notifier)
-                  .setFrameAnalysisInterval(value.round()),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Slider(
+                value: config.frameAnalysisInterval.toDouble(),
+                min: 500,
+                max: 5000,
+                divisions: 9,
+                activeColor: Colors.green,
+                label: '${config.frameAnalysisInterval}ms',
+                onChanged: (value) => ref
+                    .read(appConfigProvider.notifier)
+                    .setFrameAnalysisInterval(value.round()),
+              ),
             ),
           ],
         ),
@@ -333,12 +528,13 @@ class SettingsScreen extends ConsumerWidget {
 
   Widget _buildPrivacySettings(
       BuildContext context, WidgetRef ref, AppConfig config) {
+    final loc = AppLocalizations.of(context)!;
     return Column(
       children: [
         _buildToggleSetting(
           context,
-          title: 'Enable Logging',
-          subtitle: 'Keep record of analyzed content (local only)',
+          title: loc.enableLogging,
+          subtitle: loc.enableLoggingDesc,
           value: config.enableLogging,
           onChanged: (value) =>
               ref.read(appConfigProvider.notifier).setEnableLogging(value),
@@ -358,7 +554,7 @@ class SettingsScreen extends ConsumerWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'All processing happens locally. Your media never leaves your device.',
+                  loc.privacyNote,
                   style: Theme.of(context)
                       .textTheme
                       .bodySmall
@@ -375,6 +571,7 @@ class SettingsScreen extends ConsumerWidget {
   // ── Keyboard Shortcuts ──────────────────────────────────────────────────────
 
   Widget _buildKeyboardShortcutsSection(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -407,7 +604,7 @@ class SettingsScreen extends ConsumerWidget {
             builder: (_) => const KeyboardShortcutsDialog(),
           ),
           icon: const Icon(Icons.keyboard, size: 18),
-          label: const Text('View All Shortcuts'),
+          label: Text(loc.viewAllShortcuts),
         ),
       ],
     );
@@ -416,6 +613,7 @@ class SettingsScreen extends ConsumerWidget {
   // ── About ───────────────────────────────────────────────────────────────────
 
   Widget _buildAboutSection(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Row(
       children: [
         Container(
@@ -439,7 +637,7 @@ class SettingsScreen extends ConsumerWidget {
                   ?.copyWith(fontWeight: FontWeight.bold),
             ),
             Text(
-              'Version 1.0.5 — Privacy-first media player',
+              '${loc.version} 1.0.5 — Privacy-first media player',
               style: Theme.of(context)
                   .textTheme
                   .bodySmall
@@ -461,9 +659,9 @@ class SettingsScreen extends ConsumerWidget {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -483,7 +681,7 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
-          const Divider(height: 1, color: Color(0xFF3A3A3A)),
+          Divider(height: 1, color: Theme.of(context).dividerColor),
           Padding(
             padding: const EdgeInsets.all(16),
             child: child,
@@ -500,30 +698,37 @@ class SettingsScreen extends ConsumerWidget {
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: Theme.of(context).textTheme.bodyLarge),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: Colors.grey[500]),
+    return InkWell(
+      onTap: () => onChanged(!value),
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: Theme.of(context).textTheme.bodyLarge),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: Colors.grey[500]),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+            Switch(
+              value: value,
+              onChanged: onChanged,
+              activeThumbColor: Colors.green,
+            ),
+          ],
         ),
-        Switch(
-          value: value,
-          onChanged: onChanged,
-          activeColor: Colors.green,
-        ),
-      ],
+      ),
     );
   }
 }

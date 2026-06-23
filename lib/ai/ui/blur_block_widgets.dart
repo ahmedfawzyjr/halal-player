@@ -120,13 +120,13 @@ class BlockedContentScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: Container(
           margin: const EdgeInsets.all(48),
           padding: const EdgeInsets.all(48),
           decoration: BoxDecoration(
-            color: const Color(0xFF2A2A2A),
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: Colors.red, width: 2),
           ),

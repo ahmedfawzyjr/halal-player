@@ -8,7 +8,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../core/language_provider.dart';
 import '../../core/config.dart';
-import '../../core/theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../main.dart';
 import '../../modules/subtitles/subtitle_provider.dart';
@@ -44,7 +43,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
                     'assets/img/logo-icon.png',
                     width: 24,
                     height: 24,
-                    errorBuilder: (_, __, ___) => const Icon(Icons.play_circle, size: 24),
+                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.play_circle, size: 24),
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -144,25 +143,26 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
 
   Widget _buildLanguagePage(BuildContext context, WidgetRef ref) {
     final currentLocale = ref.watch(languageProvider);
+    final isMobile = MediaQuery.of(context).size.width < 600;
     
     return Padding(
-      padding: const EdgeInsets.all(32.0),
+      padding: isMobile ? const EdgeInsets.all(16.0) : const EdgeInsets.all(32.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.language, size: 64, color: Colors.blue),
           const SizedBox(height: 24),
           Text(
-            'Select Language / اختر اللغة',
+            'Select Language',
             style: Theme.of(context).textTheme.headlineMedium,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           Expanded(
             child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                childAspectRatio: 2.5,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: isMobile ? 2 : 3,
+                childAspectRatio: isMobile ? 2.8 : 2.5,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
               ),
@@ -179,7 +179,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: isSelected 
-                          ? Theme.of(context).primaryColor.withOpacity(0.1)
+                          ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
                           : null,
                       border: Border.all(
                         color: isSelected 
@@ -190,9 +190,14 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
                     child: Text(
                       lang.nativeName,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
+                        fontSize: isMobile ? 12.5 : 14,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                         color: isSelected 
                             ? Theme.of(context).primaryColor 
@@ -210,8 +215,9 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
   }
 
   Widget _buildPrivacyPage(BuildContext context, AppLocalizations l10n) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
     return Padding(
-      padding: const EdgeInsets.all(32.0),
+      padding: isMobile ? const EdgeInsets.all(16.0) : const EdgeInsets.all(32.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -222,25 +228,32 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
             style: Theme.of(context).textTheme.headlineMedium,
           ),
           const SizedBox(height: 24),
-          _buildFeatureItem(
-            context,
-            Icons.wifi_off,
-            '100% Offline',
-            'All AI processing happens locally on your device.',
-          ),
-          const SizedBox(height: 16),
-          _buildFeatureItem(
-            context,
-            Icons.cloud_off,
-            'No Cloud Uploads',
-            'Your photos and videos never leave your computer.',
-          ),
-          const SizedBox(height: 16),
-          _buildFeatureItem(
-            context,
-            Icons.visibility_off,
-            'No Tracking',
-            'We do not track your usage or collect personal data.',
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Column(
+              children: [
+                _buildFeatureItem(
+                  context,
+                  Icons.wifi_off,
+                  '100% Offline',
+                  'All AI processing happens locally on your device.',
+                ),
+                const SizedBox(height: 16),
+                _buildFeatureItem(
+                  context,
+                  Icons.cloud_off,
+                  'No Cloud Uploads',
+                  'Your photos and videos never leave your computer.',
+                ),
+                const SizedBox(height: 16),
+                _buildFeatureItem(
+                  context,
+                  Icons.visibility_off,
+                  'No Tracking',
+                  'We do not track your usage or collect personal data.',
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -258,7 +271,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceVariant,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, size: 24),
@@ -290,8 +303,9 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
     WidgetRef ref,
     AppLocalizations l10n,
   ) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
     return Padding(
-      padding: const EdgeInsets.all(32.0),
+      padding: isMobile ? const EdgeInsets.all(16.0) : const EdgeInsets.all(32.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -306,35 +320,38 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
             'Choose your initial protection level',
             style: Theme.of(context).textTheme.bodyLarge,
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           Expanded(
-            child: ListView(
-              children: [
-                _buildModeTile(
-                  context,
-                  ref,
-                  FilterMode.strictIslamic,
-                  'Strict Islamic',
-                  'Blocks all inappropriate content immediately.',
-                  Icons.mosque,
-                ),
-                _buildModeTile(
-                  context,
-                  ref,
-                  FilterMode.family,
-                  'Family Safe',
-                  'Blurs inappropriate content. Good for families.',
-                  Icons.family_restroom,
-                ),
-                _buildModeTile(
-                  context,
-                  ref,
-                  FilterMode.teen,
-                  'Teen / Moderate',
-                  'Allows mild content but blocks explicit scenes.',
-                  Icons.school,
-                ),
-              ],
+            child: Directionality(
+              textDirection: TextDirection.ltr,
+              child: ListView(
+                children: [
+                  _buildModeTile(
+                    context,
+                    ref,
+                    FilterMode.strictIslamic,
+                    'Strict Islamic',
+                    'Blocks all inappropriate content immediately.',
+                    Icons.mosque,
+                  ),
+                  _buildModeTile(
+                    context,
+                    ref,
+                    FilterMode.family,
+                    'Family Safe',
+                    'Blurs inappropriate content. Good for families.',
+                    Icons.family_restroom,
+                  ),
+                  _buildModeTile(
+                    context,
+                    ref,
+                    FilterMode.teen,
+                    'Teen / Moderate',
+                    'Allows mild content but blocks explicit scenes.',
+                    Icons.school,
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -407,20 +424,16 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
   Widget _buildSubtitlePage(BuildContext context, AppLocalizations l10n) {
     final subtitleSettings = ref.watch(subtitleSettingsProvider);
     final notifier = ref.read(subtitleSettingsProvider.notifier);
+    final isMobile = MediaQuery.of(context).size.width < 600;
 
     // Language options for subtitles
     const langOptions = [
       ('ar', 'العربية'),
       ('en', 'English'),
-      ('fr', 'Français'),
-      ('de', 'Deutsch'),
-      ('es', 'Español'),
-      ('tr', 'Türkçe'),
-      ('ur', 'اردو'),
     ];
 
     return Padding(
-      padding: const EdgeInsets.all(32.0),
+      padding: isMobile ? const EdgeInsets.all(16.0) : const EdgeInsets.all(32.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -435,64 +448,73 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
             'Configure subtitle preferences',
             style: Theme.of(context).textTheme.bodyLarge,
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           // Auto-download toggle
-          Card(
-            child: SwitchListTile(
-              title: const Text('Auto-download subtitles'),
-              subtitle: const Text('Download subtitles from OpenSubtitles'),
-              value: subtitleSettings.autoDownload,
-              onChanged: notifier.setAutoDownload,
-              secondary: const Icon(Icons.download),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Card(
+              child: SwitchListTile(
+                title: Text(AppLocalizations.of(context)!.autoDownload),
+                subtitle: Text(AppLocalizations.of(context)!.downloadSubtitlesDesc),
+                value: subtitleSettings.autoDownload,
+                onChanged: notifier.setAutoDownload,
+                secondary: const Icon(Icons.download),
+              ),
             ),
           ),
           const SizedBox(height: 12),
           // Language selector
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                children: [
-                  const Icon(Icons.language),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Preferred Subtitle Language'),
-                        const SizedBox(height: 4),
-                        DropdownButton<String>(
-                          value: subtitleSettings.preferredLanguage,
-                          isExpanded: true,
-                          underline: const SizedBox(),
-                          items: langOptions
-                              .map((l) => DropdownMenuItem(
-                                    value: l.$1,
-                                    child: Text(l.$2),
-                                  ))
-                              .toList(),
-                          onChanged: (code) {
-                            if (code != null) {
-                              notifier.setPreferredLanguage(code);
-                            }
-                          },
-                        ),
-                      ],
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    const Icon(Icons.language),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(AppLocalizations.of(context)!.preferredSubtitleLanguage),
+                          const SizedBox(height: 4),
+                          DropdownButton<String>(
+                            value: subtitleSettings.preferredLanguage,
+                            isExpanded: true,
+                            underline: const SizedBox(),
+                            items: langOptions
+                                .map((l) => DropdownMenuItem(
+                                      value: l.$1,
+                                      child: Text(l.$2),
+                                    ))
+                                .toList(),
+                            onChanged: (code) {
+                              if (code != null) {
+                                notifier.setPreferredLanguage(code);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
           const SizedBox(height: 12),
           // Islamic filter toggle
-          Card(
-            child: SwitchListTile(
-              title: const Text('Islamic Safe Mode'),
-              subtitle: const Text('Filter inappropriate words in subtitles'),
-              value: subtitleSettings.islamicFilter,
-              onChanged: notifier.setIslamicFilter,
-              secondary: const Icon(Icons.mosque),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Card(
+              child: SwitchListTile(
+                title: Text(AppLocalizations.of(context)!.islamicSafeMode),
+                subtitle: Text(AppLocalizations.of(context)!.filterInappropriateWords),
+                value: subtitleSettings.islamicFilter,
+                onChanged: notifier.setIslamicFilter,
+                secondary: const Icon(Icons.mosque),
+              ),
             ),
           ),
         ],
@@ -501,22 +523,31 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
   }
 
   Widget _buildFinishPage(BuildContext context, AppLocalizations l10n) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
     return Padding(
-      padding: const EdgeInsets.all(32.0),
+      padding: isMobile ? const EdgeInsets.all(16.0) : const EdgeInsets.all(32.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.check_circle_outline, size: 100, color: Colors.green),
           const SizedBox(height: 32),
-          Text(
-            'You are all set!',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Halal Player is ready to protect your media experience.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge,
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Column(
+              children: [
+                Text(
+                  'You are all set!',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Halal Player is ready to protect your media experience.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              ],
+            ),
           ),
         ],
       ),
