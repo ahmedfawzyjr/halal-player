@@ -58,3 +58,4 @@ assets/models/*.bin
 .env
 android/key.properties
 /assets/
+.vercel
